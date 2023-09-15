@@ -1,12 +1,13 @@
 {
   "name": "object-selectors",
   "version": "1.0.0",
-  "description": "Query and manipulate nested object properties with an expressive CSS-like notation.",
-  "main": "selector.js",
+  "description": "Query and manipulate nested object properties with an expressive and intuitive notation.",
+  "main": "interface.js",
   "type": "module",
   "scripts": {
     "test": "npx mocha --colors --require mocha.conf.js --extension .spec.js .",
-    "build": "npx gulp build-parser"
+    "build-parser": "npx gulp build-parser",
+    "build-docs": "npx documentation readme -f md interface.js --shallow --no-markdown-toc --section API"
   },
   "repository": {
     "type": "git",
