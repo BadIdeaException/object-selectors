@@ -1,0 +1,172 @@
+/*
+ * A selector is a series of property descriptors separated by the accessor operator ('.')
+ */
+Selector 
+	= selector:(head:Property_descriptor tail:Accessor_selector* { 
+		
+		return [ 
+			...head,  		// Spread operator: property descriptors are parsed as arrays (because they might include conditions)
+			...tail.flat()	// Spread operator: the tail is an array of Accessor_selectors because of the asterisk operator
+							// flat(): accessor selectors are themselves arrays as well (see their parse return value)
+		]; 
+	}) {
+		return Object.assign(function select(obj, references) {
+			const resolution = [
+				{ target: obj, selection: [] }
+			]
+			selector?.forEach(element => element(resolution, references));
+			return resolution;
+		}, { 
+			// The selector as a whole is ambiguous if at least one of its constituents is ambiguous (multi-valued)
+			ambiguous: selector.some(fn => fn.ambiguous),
+			source: text()
+		});
+	};
+
+Accessor_selector 
+	= accessor:Accessor property:Property_descriptor { 
+		return [ accessor, ...property ]
+	};
+	
+Accessor 
+	= "." {
+		return function access(resolution) {
+			let result = [];
+			for (let item of resolution) {
+				result = result.concat(item.selection.map(property => ({
+					target: item.target[property],
+					selection: []
+				})));
+			}
+			resolution.splice(0, resolution.length, ...result); // Work in-place
+		}
+	};
+
+/*
+ * A property descriptor is a property name (which may include wildcards, see below) optionally followed by
+ * a series of conditions.
+ */
+Property_descriptor 
+	= property:Property_name condition:Condition* { return [ property, ...condition ] };
+/*
+ * A property name is an identifier, or a property name with wildcards.
+ */
+Property_name
+	= regex:Property_name_with_wildcard {
+		// Wildcard selectors are always ambiguous
+		return Object.assign(function selectByRegex(resolution) {
+			for (let item of resolution) {
+				item.selection = Object.keys(item.target).filter(key => regex.test(key))
+			}
+		}, { ambiguous: true });
+	} 
+	/ name:Identifier {
+		return function selectByName(resolution) {
+			resolution.forEach(item => item.selection = [ name ]);
+		}          
+	}
+
+/*
+ * A condition is a unary condition or a binary condition, enclosed in square brackets. 
+ * There may be whitespace between the opening and closing brackets and the actual condition expression.
+ */
+Condition 
+	= "[" _* condition:(UnaryCondition / BinaryCondition) _* "]" {
+		return function selectByCondition(resolution, references) {        				
+			const { selector, operator, valueFn } = condition;
+			const value = valueFn(references);
+			for (let item of resolution) 				
+				item.selection = item.selection.filter(selectedProperty => {
+					// Normalize condition selector from tuples (target, multiple selections) to 
+					// (target, single selection)
+					const conditionProperties = selector(item.target[selectedProperty])
+						.flatMap(({ target, selection }) => selection.map(conditionProperty => ({ target, conditionProperty })));
+
+					return conditionProperties.length > 0 && conditionProperties.every(({ target, conditionProperty }) => operator(target[conditionProperty], value));
+				});
+		}
+	};
+/*
+ * A unary condition is a condition that does not have an operator and a value.
+ * It consists only of a property name.
+ */
+UnaryCondition 
+	= !BinaryCondition selector:Selector {
+		return { selector, operator: Boolean, valueFn: () => null };
+	};
+/*
+ * A binary condition is a condition that has an operator and a value.
+ * It is of the form <property> <operator> <value>, where <operator> may be one of the
+ * following: ===, ==, $=, ^=, ~=, <, >=, <=, or <
+ */
+BinaryCondition 
+	= selector:Selector _* operator:Operator _* valueFn:Value {     	
+		if (operator.name === '~=') {
+			let _valueFn = valueFn;
+			valueFn = references => new RegExp(_valueFn(references));
+		}		
+		return { selector, operator, valueFn };
+	};
+Operator
+	= operator:("===" / "==" / "$=" / "^=" / "~=" / ">=" / "<=" / ">" / "<") {
+		return {
+			'==': (a,b) => a == b,
+			'===': (a,b) => a === b,
+			'$=': (a,b) => a?.endsWith(b),
+			'^=': (a,b) => a?.startsWith(b),
+			'~=': (a,b) => b.test(a),
+			'>': (a,b) => a > b,
+			'>=': (a,b) => a >= b,
+			'<=': (a,b) => a <= b,
+			'<': (a,b) => a < b
+		}[operator];
+	}
+Value = ReferenceValue / LiteralValue;
+
+ReferenceValue
+	= Reference_character reference:Identifier {
+		// Return a function that resolves the reference against the passed references object
+		return references => references[reference];
+	};
+Reference_character = "@";
+LiteralValue 
+	= identifier: Identifier { 
+		// Return a constant function that returns identifier, so as to present the same interface as a reference value
+		return () => identifier; 
+	};
+Identifier 
+	= symbols:Symbol+ { return symbols.join(''); }; 
+	// Can't just do $Symbol because then we lose the ability to ignore the escape character
+
+/*
+ * A property name is, conceptually, a series of identifiers separated by single wildcards, with an optional single 
+ * wildcard at the beginning and the end. There must be at least one wildcard.
+ */
+Property_name_with_wildcard = 
+	&(Identifier? Wildcard) // Make sure there is at least one wildcard to avoid ambiguity with rule Identifier
+	descriptor:(Single_wildcard? (Identifier Single_wildcard?)*  Single_wildcard?)
+	{ return new RegExp('^' + descriptor.flat(Infinity).join('') + '$') };
+/* A single wildcard is a wildcard that is not immediately followed by another wildcard */
+Single_wildcard 
+	= Wildcard !Wildcard;
+Wildcard 
+	= wildcard:("*" / "?") {
+		switch (wildcard) {
+			case '*': return '\\w*';
+			case '?': return '\\w';
+		}
+	}
+
+
+Permitted_character 
+	= [A-Za-z0-9_];
+Reserved_character 
+	= $(Accessor / "+" / "~" / "[" / "]" / Wildcard / Escape_character / Reference_character / Operator / _);
+Escape_character 
+	= "\\";
+/* A Symbol is a permitted character, or an escaped reserved character */
+Symbol 
+	= Escape_character char:Reserved_character { return char; }
+	/ Permitted_character;
+_ "whitespace" 
+	= [ \t] { return; }
