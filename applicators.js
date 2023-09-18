@@ -69,7 +69,7 @@ export function compile(selector) {
  * If the results are not all deeply equal, an error will be thrown. (Note that the function will still have been applied, though.)
  *
  * @param  {string|Selector}   selector The selector describing the properties to apply the function to. This can either be a string, or
- * a [pre-compiled selector]{@link compile}.
+ * a pre-compiled selector (see {@link compile}).
  * @param  {Function} fn       The function to apply.
  * @param  {Object}   obj      The object on whose properties to apply the function.
  * @param  {Object}   [options]  An optional object with further options for the operation

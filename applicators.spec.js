@@ -1,6 +1,6 @@
 "use strict";
 
-import { apply, get, set, compile, CollationError } from './interface.js';
+import { apply, get, set, compile, CollationError } from './applicators.js';
 import sinon from 'sinon';
 import esmock from 'esmock';
 
@@ -130,7 +130,7 @@ describe('compile', function() {
 	it('should not re-parse the selector after pre-compiling', async function() {
 		let parse = (await import('./selector.js')).parse;
 		parse = sinon.stub().callsFake(parse);
-		const { get, compile } = await esmock('./interface.js', {
+		const { get, compile } = await esmock('./applicators.js', {
 			'./selector.js': { parse }
 		});
 

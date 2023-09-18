@@ -2,7 +2,7 @@
   "name": "object-selectors",
   "version": "1.0.0",
   "description": "Query and manipulate nested object properties with an expressive and intuitive notation.",
-  "main": "interface.js",
+  "main": "applicators.js",
   "type": "module",
   "scripts": {
     "test": "npx mocha --colors --require mocha.conf.js --extension .spec.js .",
