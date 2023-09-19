@@ -7,7 +7,7 @@
   "scripts": {
     "test": "npx mocha --colors --require mocha.conf.js --extension .spec.js .",
     "build-parser": "npx gulp build-parser",
-    "build-docs": "npx documentation readme -f md interface.js --shallow --no-markdown-toc --section API"
+    "build-docs": "npx documentation readme -f md applicators.js --shallow --no-markdown-toc --section API"
   },
   "repository": {
     "type": "git",
