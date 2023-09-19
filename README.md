@@ -22,6 +22,8 @@ you can simply write
 
 [API](#api)
 
+[Performance considerations](#performance-considerations)
+
 [Security considerations](#security-considerations)
 
 ## Usage
@@ -139,7 +141,7 @@ Operator | Condition looks like | Meaning
 ### compile
 
 Compiles the given `selector`. The compiled selector can be passed to `apply`, `get`, and `set` instead of the original string.
-If you intend to re-use a given selector for multiple operations, pre-compiling it gives a performance boost.
+If you intend to re-use a given selector for multiple operations, pre-compiling it gives a significant performance boost.
 
 The returned compiled selector also has methods `apply`, `get`, and `set`, so instead of calling `get(compiledSelector, obj)` you can
 also do `compiledSelector.get(obj)`.
@@ -216,6 +218,24 @@ Otherwise, this function follows the same rules as [apply](#apply).
 
 Returns **any** The new values of the selected properties. Unless collating, the length of the result gives an indication of
 how many properties matched the selector.
+
+## Performance considerations
+
+There are a few other libraries that do the same thing, although none offer the features and expressive powers of this one. In particular, none allow using wildcards in selectors, conditions, or application of arbitrary functions - that's why I wrote this in the first place. That power comes at a price, though, and that price is speed. Below are benchmark results comparing `object-selectors` with some of the competitors.
+
+Library | ops/sec
+---|---:
+object-selectors (string selector) | 91,700 ops/sec ±10.38% (85 runs sampled)
+object-selectors (pre-compiled) | 1,041,568 ops/sec ±2.11% (90 runs sampled)
+[easy-object-selector](https://github.com/deltavi/easy-object-selector) | 4,080,250 ops/sec ±1.58% (93 runs sampled)
+[object-path](https://github.com/mariocasciaro/object-path) | 997,770 ops/sec ±6.47% (81 runs sampled)
+[dot-prop](https://github.com/sindresorhus/dot-prop) | 3,310,430 ops/sec ±8.16% (70 runs sampled)
+[pathval](https://github.com/chaijs/pathval) | 275,348 ops/sec ±4.44% (64 runs sampled)
+[getvalue](https://github.com/jonschlinkert/get-value) | 2,342,407 ops/sec ±3.62% (84 runs sampled)
+
+The key take aways:
+1. If you only need to access simple nested properties in objects and performance is a concern, you should probably go with a different library. 
+2. Pre-compiling a repeatedly-used selector gives a performance gain of about factor 100.
 
 ## Security considerations
 
