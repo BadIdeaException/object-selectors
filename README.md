@@ -225,8 +225,9 @@ There are a few other libraries that do the same thing, although none offer the 
 
 Library | ops/sec
 ---|---:
-object-selectors (string selector) | 91,700 ops/sec ±10.38% (85 runs sampled)
-object-selectors (pre-compiled) | 1,041,568 ops/sec ±2.11% (90 runs sampled)
+object-selectors (string selector, collation auto) | 91,700 ops/sec ±10.38% (85 runs sampled)
+object-selectors (pre-compiled, collation auto) | 1,041,568 ops/sec ±2.11% (90 runs sampled)
+object-selectors (pre-compiled, collation off) | 1,183,696 ops/sec ±1.58% (87 runs sampled)
 [easy-object-selector](https://github.com/deltavi/easy-object-selector) | 4,080,250 ops/sec ±1.58% (93 runs sampled)
 [object-path](https://github.com/mariocasciaro/object-path) | 997,770 ops/sec ±6.47% (81 runs sampled)
 [dot-prop](https://github.com/sindresorhus/dot-prop) | 3,310,430 ops/sec ±8.16% (70 runs sampled)

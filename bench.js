@@ -17,6 +17,9 @@ new Benchmark.Suite('object-selectors vs. easy-object-selector')
 	.add('object-selectors (pre-compiled)', function() {
 		get(compiled, obj)
 	})
+	.add('object-selectors (pre-compiled, no collation)', function() {
+		get(compiled, obj, { collate: false })
+	})
 	.add('easy-object-selector', function() {
 		easyobjectselector.select(obj, selector);
 	})
