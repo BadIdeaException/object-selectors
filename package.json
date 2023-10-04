@@ -1,6 +1,6 @@
 {
   "name": "object-selectors",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Query and manipulate nested object properties with an expressive and intuitive notation.",
   "main": "applicators.js",
   "type": "module",
