@@ -52,10 +52,9 @@ describe('Selector syntax', function() {
 			WILDCARDS.forEach(wildcard => expect(parse.bind(null, wildcard), wildcard).to.not.throw());
 		});
 
-		it('should not allow double wildcards', function() {
-			for (const first of WILDCARDS)
-				for (const second of WILDCARDS)
-					expect(parse.bind(null, `${first}${second}`), `${first}${second}`).to.throw();
+		it('should allow double wildcards except double asterisks', function() {
+			[ '*?', '?*', '??' ].forEach(combination => expect(parse.bind(null, combination), combination).to.not.throw());
+			expect(parse.bind(null, '**'), '**').to.throw();
 		});
 	});
 
@@ -98,15 +97,15 @@ describe('Selector syntax', function() {
 
 describe('Selector semantics', function() {
 	describe('Simple selectors', function() {
-		it('should select nothing with an empty selector', function() {
+		it('should select the root object with an empty selector', function() {
 			const key = '';
 			const obj = {};
 
 			const resolution = parse(key)(obj);
 
 			expect(resolution).to.be.an('array').with.lengthOf(1);
-			expect(resolution[0]).to.have.property('target').that.equals(obj);
-			expect(resolution[0]).to.have.property('selection').that.is.empty;
+			expect(resolution[0]).to.have.property('target').that.deep.equals({ obj });
+			expect(resolution[0]).to.have.property('selection').that.is.an('array').with.members([ 'obj' ]);
 		});
 
 		it('should select a property by name', function() {
