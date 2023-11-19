@@ -12,6 +12,15 @@ you can simply write
 
     set('a.b*[c === foo].c', obj, 'bar')
 
+
+&NewLine;  
+&NewLine;  
+
+>  :information_source: **Note**: This is version 2.0 of this package. It introduces the following breaking changes:
+> - `apply` was renamed to `perform`
+> - The empty selector now selects the input object instead of nothing.
+
+
 ## Table of contents
 
 [Usage](#usage)
