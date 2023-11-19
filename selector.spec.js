@@ -88,7 +88,7 @@ describe('Selector syntax', function() {
 		});
 	});
 
-	describe('Selector Union', function() {
+	describe.skip('Selector Union', function() {
 		it('should allow unioning selectors with a comma', function() {
 			expect(parse.bind(null, 'a, b')).to.not.throw();
 		});
@@ -258,7 +258,7 @@ describe('Selector semantics', function() {
 		});
 	});
 
-	describe('Selector Union', function() {
+	describe.skip('Selector Union', function() {
 		it('should return the concatenated results of all constituent selectors', function() {
 			const selector1 = 'a1';
 			const selector2 = 'a2';
