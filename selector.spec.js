@@ -96,6 +96,10 @@ describe('Selector syntax', function() {
 });
 
 describe('Selector semantics', function() {
+	const MODE_NORMAL = 0;
+	const MODE_STRICT = 1;
+	const MODE_LENIENT = 2;
+
 	describe('Simple selectors', function() {
 		it('should select the root object with an empty selector', function() {
 			const key = '';
@@ -255,6 +259,60 @@ describe('Selector semantics', function() {
 			expect(resolution).to.be.an('array').with.lengthOf(1);
 			expect(resolution[0]).to.have.property('target').that.equals(obj);
 			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+		});
+	});
+
+	describe('Parsing modes', function() {
+		describe('Normal mode', function() {
+			it('should not throw when selecting a non-existing property that is the terminal part of its selector', function() {
+				const parser = parse('a');
+				expect(parser.bind(null, {}, null, MODE_NORMAL)).to.not.throw();
+			});
+
+			it('should throw when selecting a non-existing property that is an intermediate part of the selector', function() {
+				expect(parse('a.b.c').bind(null, {}, null, MODE_NORMAL)).to.throw();
+
+				// There is another, slightly more complex case here: when selecting a.b on {}, parse will actually NOT throw,
+				// but return a resolution with an undefined target.
+				// (Trying to work with that resolution however will invariable throw.)
+				const parser = parse('a.b');
+				expect(parser.bind(null, {}, null, MODE_NORMAL)).to.not.throw();
+
+				const resolution = parser({}, null, MODE_NORMAL);
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0].target).to.not.exist;
+			});
+		});
+
+		describe('Strict mode', function() {
+			it('should throw an error when selecting a non-existing property', function() {
+				expect(parse('a').bind(null, {}, null, MODE_STRICT)).to.throw();
+			});
+
+			it('should throw an error when no properties match a wildcard selector' , function() {
+				expect(parse('a*').bind(null, {}, null, MODE_STRICT)).to.throw();
+			});
+		});
+
+		describe('Lenient mode', function() {
+			it('should ignore intermediate non-matches when selecting unambiguously', function() {
+				expect(parse('a.b')({}, {}, MODE_LENIENT)).to.be.empty;
+			});
+
+			it('should silently discard intermediate non-matches when selecting with wildcards', function() {
+				const obj = {
+					a1: { b: { c: 1 }},
+					a2: { not_b: { c: 2 }}
+				}
+
+				const parser = parse('a?.b.c');
+				expect(parser.bind(null, obj, null, MODE_LENIENT)).to.not.throw();
+
+				const resolution = parser(obj, null, MODE_LENIENT);
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj.a1.b);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'c' ]);
+			});
 		});
 	});
 

@@ -232,11 +232,11 @@ function peg$parse(input, options) {
 		// Return value is the function select, but we will set some meta-properties of the selector on it:
 		// - Whether or not the selector is ambiguous
 		// - The raw source text of the selector
-		return Object.assign(function select(obj, references) {
+		return Object.assign(function select(obj, references, mode) {
 			const resolution = [
 				{ target: obj, selection: [] }
 			]
-			selector?.forEach(element => element(resolution, references));
+			selector?.forEach(element => element(resolution, references, mode));
 			return resolution;
 		}, { 
 			// The selector as a whole is ambiguous if at least one of its constituents is ambiguous (multi-valued)
@@ -268,7 +268,39 @@ function peg$parse(input, options) {
 			resolution.splice(0, resolution.length, ...result); // Work in-place
 		}
 	};
-  var peg$f6 = function(property, condition) { return [ property, ...condition ] };
+  var peg$f6 = function(property, condition) { 
+		return [ 
+			property, 
+			...condition, 
+			function validate(resolution, references, mode = MODE_NORMAL) {
+				if (mode) {debugger
+					// Run through the current resolutions backwards, because we may be changing them
+					for (let i = resolution.length - 1; i >= 0; i--) {
+						// There is an "invalid" resolution if
+						// - no matching selections were found
+						// - or a set selection does not exist on the target
+						for (let j = resolution[i].selection.length - 1; j >= 0; j--) {
+							if (!(resolution[i].selection[j] in resolution[i].target)) {
+								switch(mode) {
+									// In strict mode, throw an error
+									case MODE_STRICT: throw new TypeError(`Object has no properties matching ${text()}`);
+									// In lenient mode, remove the offending selection	
+									case MODE_LENIENT: resolution[i].selection.splice(j, 1);
+								}
+							}
+						}
+						// If after removing all offending selections none are left, remove the entire resolution in lenient
+						// mode or throw in strict mode
+						if (resolution[i].selection.length === 0)
+							switch (mode) {
+								case MODE_STRICT: throw new TypeError(`Object has no properties matching ${text()}`)
+								case MODE_LENIENT: resolution.splice(i, 1);
+							}
+					}
+				}
+			} 
+		] 
+	};
   var peg$f7 = function(regex) {
 		// Wildcard selectors are always ambiguous
 		return Object.assign(function selectByRegex(resolution) {
@@ -1211,6 +1243,11 @@ function peg$parse(input, options) {
 
     return s0;
   }
+
+
+	const MODE_NORMAL = 0;
+	const MODE_STRICT = 1;
+	const MODE_LENIENT = 2;
 
   peg$result = peg$startRuleFunction();
 

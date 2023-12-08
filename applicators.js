@@ -9,8 +9,11 @@ function _perform(select, fn, obj, options) {
 	options ??= {};
 	// Auto-default collation to ON for unambiguous selectors, unless otherwise specified
 	options.collate ??= !select.ambiguous;
+	// Translate options.mode string to numerical mode
+	const mode = { 'strict': 1, 'lenient': 2 }[options?.mode?.toLowerCase()];
 
-	const resolution = select(obj, options?.references);
+
+	const resolution = select(obj, options?.references, mode);
 	for (let item of resolution) {
 		for (let property of item.selection) {
 			const value = fn(item.target[property], property, item.target);
@@ -71,11 +74,17 @@ export function compile(selector) {
  * _Note: In versions prior 2.0, this function was called `apply`. This has been changed to `perform` to avoid a name conflict with
  * `Function.prototype.apply` in compiled selectors._
  * @param  {string|Selector}   selector The selector describing the properties to perform the function to. This can either be a string, or
- * a pre-compiled selector (see {@link compile}).
+ * a {@link compile|pre-compiled selector}.
  * @param  {Function} fn       The function to perform.
  * @param  {Object}   obj      The object on whose properties to perform the function.
  * @param  {Object}   [options]  An optional object with further options for the operation
  * @param  {boolean}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
+ * @param  {'normal'|'strict'|'lenient'}	[options.mode='normal'] The parsing mode to use. In `normal` mode, it is permissible to select a non-existent property
+ * as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
+ * mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
+ * In `strict` mode, any attempt to select a non-existent property immediately results in an error.
+ * In `lenient` mode, non-existent properties are silently dropped.
+ * The default mode is `normal`.
  * @param  {Object}  [options.references] The values for any references used in the selector.
  * @return {*}            The results of applying `fn` to all selected properties.
  */
@@ -90,11 +99,9 @@ export function perform(selector, fn, obj, options) {
  * Gets the values of the properties described by `selector` from `obj`. No properties are changed.
  * Otherwise, this function follows the same rules as {@link perform}.
  * @param  {string|Selector}   selector The selector describing the properties to get. This can either be a string, or
- * a [pre-compiled selector]{@link compile}.
+ * a {@link compile|pre-compiled selector}.
  * @param  {Object}   obj      The object whose properties to get.
- * @param  {Object}   [options]  An optional object with further options for the operation
- * @param  {boolean}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
- * @param  {Object}  [options.references] The values for any references used in the selector.
+ * @param  {Object}   [options]  An optional object with further options for the operation. See {@link perform}.
  * @return {*}            The values of the selected properties.
  * @see perform
  */
@@ -107,12 +114,10 @@ export function get(selector, obj, options) {
  * Sets the values of the properties described by `selector` from `obj` to `value`.
  * Otherwise, this function follows the same rules as {@link perform}.
  * @param  {string|Selector}   selector The selector describing the properties to set. This can either be a string, or
- * a [pre-compiled selector]{@link compile}.
+ * a {@link compile|pre-compiled selector}.
  * @param  {Object}   obj      The object whose properties to set.
  * @param  {*}		value		The new value for the properties.
- * @param  {Object}   [options]  An optional object with further options for the operation
- * @param  {boolean}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
- * @param  {Object}  [options.references] The values for any references used in the selector.
+ * @param  {Object}   [options]  An optional object with further options for the operation. See {@link perform}.
  * @return {*}            The new values of the selected properties. Unless collating, the length of the result gives an indication of
  * how many properties matched the selector.
  * @see perform

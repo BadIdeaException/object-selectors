@@ -12,14 +12,12 @@ you can simply write
 
     set('a.b*[c === foo].c', obj, 'bar')
 
+\\
 
-&NewLine;  
-&NewLine;  
-
->  :information_source: **Note**: This is version 2.0 of this package. It introduces the following breaking changes:
-> - `apply` was renamed to `perform`
-> - The empty selector now selects the input object instead of nothing.
-
+> :information\_source: **Note**: This is version 2.0 of this package. It introduces the following breaking changes:
+>
+> *   `apply` was renamed to `perform`
+> *   The empty selector now selects the input object instead of nothing.
 
 ## Table of contents
 
@@ -188,12 +186,15 @@ If it is unambiguous, the result is returned as a scalar. `options.collate` can 
 #### Parameters
 
 *   `selector` **([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | Selector)** The selector describing the properties to perform the function to. This can either be a string, or
-    a pre-compiled selector (see [compile](#compile)).
+    a [pre-compiled selector](#compile).
 *   `fn` **[Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)** The function to perform.
 *   `obj` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The object on whose properties to perform the function.
 *   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation
 
     *   `options.collate` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
+    *   `options.mode` **(`"normal"` | `"strict"` | `"lenient"`)** The parsing mode to use. In `normal` mode, it is permissible to select a non-existent property
+        as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
+        mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).In `strict` mode, any attempt to select a non-existent property immediately results in an error.In `lenient` mode, non-existent properties are silently dropped.The default mode is `normal`. (optional, default `'normal'`)
     *   `options.references` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** The values for any references used in the selector.
 
 Returns **any** The results of applying `fn` to all selected properties.
@@ -208,12 +209,9 @@ Otherwise, this function follows the same rules as [perform](#perform).
 #### Parameters
 
 *   `selector` **([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | Selector)** The selector describing the properties to get. This can either be a string, or
-    a \[pre-compiled selector][compile](#compile).
+    a [pre-compiled selector](#compile).
 *   `obj` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The object whose properties to get.
-*   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation
-
-    *   `options.collate` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
-    *   `options.references` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** The values for any references used in the selector.
+*   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation. See [perform](#perform).
 
 Returns **any** The values of the selected properties.
 
@@ -227,13 +225,10 @@ Otherwise, this function follows the same rules as [perform](#perform).
 #### Parameters
 
 *   `selector` **([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | Selector)** The selector describing the properties to set. This can either be a string, or
-    a \[pre-compiled selector][compile](#compile).
+    a [pre-compiled selector](#compile).
 *   `obj` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The object whose properties to set.
 *   `value` **any** The new value for the properties.
-*   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation
-
-    *   `options.collate` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
-    *   `options.references` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** The values for any references used in the selector.
+*   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation. See [perform](#perform).
 
 Returns **any** The new values of the selected properties. Unless collating, the length of the result gives an indication of
 how many properties matched the selector.
@@ -244,9 +239,9 @@ There are a few other libraries that do the same thing, although none offer the 
 
 Library | ops/sec
 \---|---:
-object-selectors (string selector, collation auto) | 91,700 ops/sec ±10.38% (85 runs sampled)
-object-selectors (pre-compiled, collation auto) | 1,041,568 ops/sec ±2.11% (90 runs sampled)
-object-selectors (pre-compiled, collation off) | 1,183,696 ops/sec ±1.58% (87 runs sampled)
+object-selectors (string selector, collation auto) | 85,938 ops/sec ±15.56% (93 runs sampled)
+object-selectors (pre-compiled, collation auto) | 844,536 ops/sec ±9.73% (76 runs sampled)
+object-selectors (pre-compiled, collation off) | 1,106,929 ops/sec ±2.19% (93 runs sampled)
 [easy-object-selector](https://github.com/deltavi/easy-object-selector) | 4,080,250 ops/sec ±1.58% (93 runs sampled)
 [object-path](https://github.com/mariocasciaro/object-path) | 997,770 ops/sec ±6.47% (81 runs sampled)
 [dot-prop](https://github.com/sindresorhus/dot-prop) | 3,310,430 ops/sec ±8.16% (70 runs sampled)

@@ -81,6 +81,24 @@ describe('perform', function() {
 			expect(perform.bind(null, 'a.b*.c', fn, obj, { collate: true })).to.throw(CollationError);
 		});
 	});
+
+	describe('modes', function() {
+		const fn = x => x + 1;
+
+		it('should throw when selecting non-existent properties in strict mode', function() {
+			expect(perform.bind(null, 'a.b.c', fn, {}, { mode: 'strict' })).to.throw();
+		});
+
+		it('should ignore non-existent properties in lenient mode', function() {
+			const obj = {
+				a1: { b: { c: 1 }},
+				a2: { not_b: { c: 2 }}
+			}
+			const spy = sinon.spy(fn);
+			perform('a?.b.c', spy, obj, { mode: 'lenient' });
+			expect(spy).to.have.been.calledOnce.and.calledWith(1);
+		});
+	});
 });
 
 describe('get', function() {
