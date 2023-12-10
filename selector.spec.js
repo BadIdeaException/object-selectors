@@ -301,6 +301,14 @@ describe('Selector semantics', function() {
 
 				expect(parse('a?[b.c == 1]').bind(null, obj, null, MODE_STRICT)).to.throw();
 			});
+
+			it('should throw when the target of the resolution in a conditional selection is a literal', function() {
+				const obj = {
+					a1: { b: { c: 1 }},
+					a2: { b: 'literal' }
+				}
+				expect(parse('a?[b.c == 1 ]').bind(null, obj, null, MODE_STRICT)).to.throw();
+			});
 		});
 
 		describe('Lenient mode', function() {
@@ -327,6 +335,21 @@ describe('Selector semantics', function() {
 				const obj = {
 					a1: { b: { c: 1 }},
 					a2: { not_b: { c: 1 }}
+				}
+
+				const parser = parse('a?[b.c == 1 ]');
+				expect(parser.bind(null, obj, null, MODE_LENIENT)).to.not.throw();
+
+				const resolution = parser(obj, null, MODE_LENIENT);
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1' ]);
+			});
+
+			it('should silently discard conditional selections where the target of the resolution is a literal', function() {
+				const obj = {
+					a1: { b: { c: 1 }},
+					a2: { b: 'literal' }
 				}
 
 				const parser = parse('a?[b.c == 1 ]');

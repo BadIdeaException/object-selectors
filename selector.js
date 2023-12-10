@@ -280,7 +280,7 @@ function peg$parse(input, options) {
 						// - no matching selections were found
 						// - or a set selection does not exist on the target
 						for (let j = resolution[i].selection.length - 1; j >= 0; j--) {
-							if (!(resolution[i].selection[j] in resolution[i].target)) {
+							if (!(typeof resolution[i].target === 'object' && resolution[i].selection[j] in resolution[i].target)) {
 								switch(mode) {
 									// In strict mode, throw an error
 									case MODE_STRICT: throw new TypeError(`Object has no properties matching ${text()}`);
