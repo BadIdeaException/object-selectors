@@ -125,14 +125,14 @@ Property_name
  */
 Condition 
 	= "[" _* condition:(UnaryCondition / BinaryCondition) _* "]" {
-		return function selectByCondition(resolution, references) {        				
+		return function selectByCondition(resolution, references, mode) {
 			const { selector, operator, valueFn } = condition;
 			const value = valueFn(references);
 			for (let item of resolution) 				
 				item.selection = item.selection.filter(selectedProperty => {
 					// Normalize condition selector from tuples (target, multiple selections) to 
 					// (target, single selection)
-					const conditionProperties = selector(item.target[selectedProperty])
+					const conditionProperties = selector(item.target[selectedProperty], references, mode)
 						.flatMap(({ target, selection }) => selection.map(conditionProperty => ({ target, conditionProperty })));
 
 					return conditionProperties.length > 0 && conditionProperties.every(({ target, conditionProperty }) => operator(target[conditionProperty], value));

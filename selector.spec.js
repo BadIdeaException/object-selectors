@@ -292,6 +292,15 @@ describe('Selector semantics', function() {
 			it('should throw an error when no properties match a wildcard selector' , function() {
 				expect(parse('a*').bind(null, {}, null, MODE_STRICT)).to.throw();
 			});
+
+			it('should throw an error when a condition uses a non-existent property', function() {
+				const obj = {
+					a1: { b: { c: 1 }},
+					a2: { not_b: { c: 1 }}
+				}
+
+				expect(parse('a?[b.c == 1]').bind(null, obj, null, MODE_STRICT)).to.throw();
+			});
 		});
 
 		describe('Lenient mode', function() {
@@ -312,6 +321,21 @@ describe('Selector semantics', function() {
 				expect(resolution).to.be.an('array').with.lengthOf(1);
 				expect(resolution[0]).to.have.property('target').that.equals(obj.a1.b);
 				expect(resolution[0]).to.have.property('selection').that.has.members([ 'c' ]);
+			});
+
+			it('should evaluate a condition using non-existent properties to false', function() {
+				const obj = {
+					a1: { b: { c: 1 }},
+					a2: { not_b: { c: 1 }}
+				}
+
+				const parser = parse('a?[b.c == 1 ]');
+				expect(parser.bind(null, obj, null, MODE_LENIENT)).to.not.throw();
+
+				const resolution = parser(obj, null, MODE_LENIENT);
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1' ]);
 			});
 		});
 	});
