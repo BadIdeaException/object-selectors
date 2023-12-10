@@ -72,7 +72,7 @@ Property_descriptor
 			property, 
 			...condition, 
 			function validate(resolution, references, mode = MODE_NORMAL) {
-				if (mode) {debugger
+				if (mode) {
 					// Run through the current resolutions backwards, because we may be changing them
 					for (let i = resolution.length - 1; i >= 0; i--) {
 						// There is an "invalid" resolution if
