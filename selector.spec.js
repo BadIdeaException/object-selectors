@@ -282,6 +282,19 @@ describe('Selector semantics', function() {
 				expect(resolution).to.be.an('array').with.lengthOf(1);
 				expect(resolution[0].target).to.not.exist;
 			});
+
+			it('should not error but resolve to a non-existent target when trying to select unambiguously on null/undefined', function() {
+				[ null, undefined ].forEach(tgt => {
+					// Helper function that invokes the parser, then executes the selection
+					// This ensures that even if the parser itself doesn't throw, the selection step will
+					function invoke(parser) {
+						return parser().flatMap(({ tgt, selection }) => selection.flatMap(prop => tgt[prop]));
+					}
+
+					expect(invoke.bind(null, parse('a').bind(null, tgt, null, MODE_NORMAL))).to.throw();
+					expect(invoke.bind(null, parse('*').bind(null, tgt, null, MODE_NORMAL))).to.throw();
+				});
+			});
 		});
 
 		describe('Strict mode', function() {
@@ -308,6 +321,13 @@ describe('Selector semantics', function() {
 					a2: { b: 'literal' }
 				}
 				expect(parse('a?[b.c == 1 ]').bind(null, obj, null, MODE_STRICT)).to.throw();
+			});
+
+			it('should throw an error when trying to select on null/undefined', function() {
+				[ null, undefined ].forEach(tgt => {
+					expect(parse('a').bind(null, tgt, null, MODE_STRICT), `unambiguous on ${tgt}`).to.throw();
+					expect(parse('*').bind(null, tgt, null, MODE_NORMAL), `ambiguous on ${tgt}`).to.throw();
+				});
 			});
 		});
 
@@ -359,6 +379,19 @@ describe('Selector semantics', function() {
 				expect(resolution).to.be.an('array').with.lengthOf(1);
 				expect(resolution[0]).to.have.property('target').that.equals(obj);
 				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1' ]);
+			});
+
+			it('should silently discard selections made on null/undefined', function() {
+				[ null, undefined ].forEach(tgt => {
+					let parser = parse('a');
+					const args = [ tgt, null, MODE_LENIENT ];
+					expect(parser.bind(null, ...args), `unambiguous on ${tgt}`).to.not.throw();
+					expect(parser(...args)).to.be.empty;
+
+					parser = parse('*');
+					expect(parser.bind(null, ...args), `ambiguous on ${tgt}`).to.not.throw();
+					expect(parser(...args)).to.be.empty;
+				});
 			});
 		});
 	});

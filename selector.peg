@@ -72,14 +72,23 @@ Property_descriptor
 			property, 
 			...condition, 
 			function validate(resolution, references, mode = MODE_NORMAL) {
+				// Helper function that checks whether the target has a property of a given name
+				// Returns false if the target is null or undefined or a primitive,
+				// otherwise checks whether the property is an own OR INHERITED property
+				// (accessor properties are defined on the prototype and would not be caught by hasOwnProperty)
+				function hasProperty(tgt, prop) {
+					if (!tgt) return false;
+					else if (typeof tgt === 'object') return prop in tgt
+					else return false;
+				}
 				if (mode) {
 					// Run through the current resolutions backwards, because we may be changing them
 					for (let i = resolution.length - 1; i >= 0; i--) {
 						// There is an "invalid" resolution if
-						// - no matching selections were found
+						// - no matching selections were found (see below)
 						// - or a set selection does not exist on the target
 						for (let j = resolution[i].selection.length - 1; j >= 0; j--) {
-							if (!(typeof resolution[i].target === 'object' && resolution[i].selection[j] in resolution[i].target)) {
+							if (!hasProperty(resolution[i].target, resolution[i].selection[j])) {
 								switch(mode) {
 									// In strict mode, throw an error
 									case MODE_STRICT: throw new TypeError(`Object has no properties matching ${text()}`);
@@ -107,9 +116,12 @@ Property_descriptor
 Property_name
 	= regex:Property_name_with_wildcard {
 		// Wildcard selectors are always ambiguous
-		return Object.assign(function selectByRegex(resolution) {
+		return Object.assign(function selectByRegex(resolution, references, mode) {
 			for (let item of resolution) {
-				item.selection = Object.keys(item.target).filter(key => regex.test(key))
+				if (mode === MODE_LENIENT && item.target == null)
+					item.selection = [];
+				else
+					item.selection = Object.keys(item.target).filter(key => regex.test(key));
 			}
 		}, { ambiguous: true });
 	} 
