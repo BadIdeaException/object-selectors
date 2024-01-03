@@ -19,7 +19,9 @@ function _perform(select, fn, obj, options) {
 			const value = fn(item.target[property], property, item.target);
 			// Only assign new value if it is different
 			// This is important so that read operations will work even on read-only (e.g. frozen) objects
-			if (value !== item.target[property])
+			// In read-only mode, NEVER attempt to set a new value. This is important so that dynamically generated properties
+			// can still be accessed, i.e. getters that create a new object every time.
+			if (!options?.readonly && value !== item.target[property])
 				item.target[property] = value;
 			result.push(value);
 		}
@@ -44,6 +46,9 @@ function _perform(select, fn, obj, options) {
  *
  * The returned compiled selector also has methods `perform`, `get`, and `set`, so instead of calling `get(compiledSelector, obj)` you can
  * also do `compiledSelector.get(obj)`.
+ *
+ * In addition, `compiledSelector.ambiguous` is a boolean flag indicating whether or not the selector is ambiguous, and `compiledSelector.source`
+ * gives access to the source string the selector was compiled from.
  * @param  {string} selector The selector to compile.
  * @return {Selector}          The compiled selector.
  */
@@ -88,6 +93,10 @@ export function compile(selector) {
  * @param  {Object}  [options.references] The values for any references used in the selector.
  * @return {*}            The results of applying `fn` to all selected properties.
  */
+/*
+ * Undocumented option:
+ * option.readonly	boolean		If true, never attempts to set a new value on the target object, regardless of whether new and old values are equal or not.
+ */
 export function perform(selector, fn, obj, options) {
 	if (typeof selector !== 'function')
 		selector = compile(selector);
@@ -106,7 +115,7 @@ export function perform(selector, fn, obj, options) {
  * @see perform
  */
 export function get(selector, obj, options) {
-	return perform(selector, x => x, obj, options);
+	return perform(selector, x => x, obj, Object.assign({}, options, { readonly: true }));
 }
 
 

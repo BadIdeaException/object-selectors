@@ -112,6 +112,18 @@ describe('get', function() {
 	it('should get all matching properties', function() {
 		expect(get('a.b*.c', obj)).to.deep.equal([ obj.a.b1.c, obj.a.b2.c ]);
 	});
+
+	it('should always be in read-only mode', function() {
+		const obj = {
+			// A getter property that will be different every time, i.e.
+			// obj.prop !== obj.prop.
+			// Without read-only mode, this would trip the change guard, because
+			// strict-equality comparison would be false
+			get prop() { return {} }
+		}
+
+		expect(get.bind(null, 'prop', obj)).to.not.throw();
+	});
 });
 
 describe('set', function() {
@@ -143,6 +155,20 @@ describe('compile', function() {
 		expect(selector).itself.to.respondTo('perform');
 		expect(selector).itself.to.respondTo('get');
 		expect(selector).itself.to.respondTo('set');
+	});
+
+	it('should have property source that equals the original string', function() {
+		const str = 'a.b.c';
+		const selector = compile(str);
+
+		expect(selector).to.have.property('source').that.equals(str);
+	});
+
+	it('should have property ambiguous indicating whether the selector is ambiguous', function() {
+		expect(compile('a.b.c')).to.have.property('ambiguous').that.is.false;
+		expect(compile('a.b[x* == x].c')).to.have.property('ambiguous').that.is.false;
+
+		expect(compile('a.b*.c')).to.have.property('ambiguous').that.is.true;
 	});
 
 	it('should not re-parse the selector after pre-compiling', async function() {
