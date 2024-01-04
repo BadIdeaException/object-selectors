@@ -12,7 +12,6 @@ you can simply write
 
     set('a.b*[c === foo].c', obj, 'bar')
 
-
 ## Table of contents
 
 [Usage](#usage)
@@ -65,6 +64,8 @@ The empty string `''` is called the **empty** selector. By definition, it select
 
 `object-selectors` comes with its own selector language that takes elements from Javascript notation, file globs and CSS selectors and combines them into the powerful notation outlined below.
 
+Selectors target own **and inherited** properties, so it is possible to use them with accessor properties.
+
 ### Basics
 
 Allowed characters in property names and values are `[A-Za-z0-9_]`. All other characters must be **escaped** with a backslash (`\`). Be aware that when specifying selectors as string literals in Javascipt, you will need to use a double backslash, as otherwise the backslash itself will be treated as an escape character by Javascript.
@@ -80,7 +81,7 @@ Properties may include wildcards (`*`, `?`) which follow the familiar semantics 
 *   The asterisk (`*`) matches 0 or more arbitrary characters
 *   The question mark (`?`) matches exactly 1 arbitrary character
 
-Using a wildcard always results in an ambiguous selector.
+Using a wildcard always results in an ambiguous selector. Wildcard selectors only target **enumerable** properties.
 
 ### Conditional selection
 

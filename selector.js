@@ -330,8 +330,13 @@ function peg$parse(input, options) {
 			for (let item of resolution) {
 				if (mode === MODE_LENIENT && item.target == null)
 					item.selection = [];
-				else
-					item.selection = Object.keys(item.target).filter(key => regex.test(key));
+				else {
+					if (item.target == undefined) throw new TypeError(`Cannot select ambiguously on ${item.target}`);
+					item.selection = [];
+					for (const key in item.target)
+						if (regex.test(key))
+							item.selection.push(key)					
+				}
 			}
 		}, { ambiguous: true });
 	};

@@ -122,6 +122,17 @@ describe('Selector semantics', function() {
 			expect(resolution[0]).to.have.property('target').that.equals(obj);
 			expect(resolution[0]).to.have.property('selection').that.is.an('array').with.members([ key ]);
 		});
+
+		it('should select inherited properties', function() {
+			const key = 'a';
+			const obj = Object.create({});
+
+			const resolution = parse(key)(obj);
+
+			expect(resolution).to.be.an('array').with.lengthOf(1);
+			expect(resolution[0]).to.have.property('target').that.equals(obj);
+			expect(resolution[0]).to.have.property('selection').that.is.an('array').with.members([ key ]);
+		});
 	});
 
 	describe('Accessor selectors', function() {
@@ -157,6 +168,34 @@ describe('Selector semantics', function() {
 			expect(resolution).to.be.an('array').with.lengthOf(1);
 			expect(resolution[0]).to.have.property('target').that.equals(obj);
 			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1', 'a2' ]);
+		});
+
+		it('should select inherited properties', function() {
+			const key = 'a?';
+			const obj = Object.create({ a1: {}, a2: {} });
+
+			const resolution = parse(key)(obj);
+
+			expect(resolution).to.be.an('array').with.lengthOf(1);
+			expect(resolution[0]).to.have.property('target').that.equals(obj);
+			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1', 'a2' ]);
+		});
+
+		it('should not select non-enumerable properties', function() {
+			const key = 'a?';
+			const obj = {};
+			Object.defineProperty(obj, 'a1', {
+				value: {},
+				enumerable: false,
+				configurable: true,
+				writable: true
+			});
+
+			const resolution = parse(key)(obj);
+
+			expect(resolution).to.be.an('array').with.lengthOf(1);
+			expect(resolution[0]).to.have.property('target').that.equals(obj);
+			expect(resolution[0]).to.have.property('selection').that.is.empty;
 		});
 	});
 
