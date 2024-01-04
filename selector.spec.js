@@ -2,7 +2,7 @@ import { parse } from './selector.js';
 
 describe('Selector syntax', function() {
 	const WILDCARDS = [ '*', '?' ];
-	const OPERATORS = [ '==', '===', '^=', '$=', '~=', '<', '<=', '>=', '>' ];
+	const OPERATORS = [ '==', '===', '!=', '!==', '^=', '$=', '~=', '<', '<=', '>=', '>' ];
 	const ACCESSOR = '.';
 
 	it('should allow the empty selector', function() {
@@ -22,7 +22,7 @@ describe('Selector syntax', function() {
 	describe('Identifiers', function() {
 		it('should throw on unescaped reserved characters in identifiers', function() {
 			const reserved = [
-				'.', '[', ']', '==', ',', ' '
+				'.', '[', ']', ...OPERATORS, ',', ' '
 			];
 
 			reserved.forEach(char =>
@@ -32,7 +32,7 @@ describe('Selector syntax', function() {
 
 		it('should not throw on escaped reserved characters in identifiers', function() {
 			const reserved = [
-				'.', '[', ']', '==', '*', '?'
+				'.', '[', ']', ...OPERATORS, '*', '?'
 			];
 
 			reserved.forEach(char =>
@@ -219,6 +219,8 @@ describe('Selector semantics', function() {
 		[
 			{ operator: '==', meaning: 'loosely equal to', satisfied: 1, violated: 2 },
 			{ operator: '===', meaning: 'strictly equal to', satisfied: '1', violated: 1 },
+			{ operator: '!==', meaning: 'not strictly equal to', satisfied: 1, violated: '1' },
+			{ operator: '!=', meaning: 'not loosely equal to', satisfied: 2, violated: 1, value: 1 },
 			{ operator: '^=', meaning: 'beginning with', satisfied: 'xyz', violated: 'zyx', value: 'x' },
 			{ operator: '$=', meaning: 'ending with', satisfied: 'xyz', violated: 'zyx', value: 'z' },
 			{ operator: '~=', meaning: 'matching the regex of', satisfied: 'abba', violated: 'aa', value: 'ab\\+a' },
@@ -236,7 +238,6 @@ describe('Selector semantics', function() {
 
 				// Condition satisfied:
 				let resolution = parse(key)(obj);
-
 				expect(resolution).to.be.an('array').with.lengthOf(1);
 				expect(resolution[0]).to.have.property('target').that.equals(obj);
 				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);

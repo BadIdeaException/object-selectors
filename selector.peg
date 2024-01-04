@@ -174,7 +174,7 @@ UnaryCondition
 /*
  * A binary condition is a condition that has an operator and a value.
  * It is of the form <property> <operator> <value>, where <operator> may be one of the
- * following: ===, ==, $=, ^=, ~=, <, >=, <=, or <
+ * following: ===, ==, !==, !=, $=, ^=, ~=, <, >=, <=, or <
  */
 BinaryCondition 
 	= selector:Selector _* operator:Operator _* valueFn:Value {     	
@@ -185,10 +185,12 @@ BinaryCondition
 		return { selector, operator, valueFn };
 	};
 Operator
-	= operator:("===" / "==" / "$=" / "^=" / "~=" / ">=" / "<=" / ">" / "<") {
+	= operator:("===" / "==" / "!==" / "!=" / "$=" / "^=" / "~=" / ">=" / "<=" / ">" / "<") {
 		return {
 			'==': (a,b) => a == b,
 			'===': (a,b) => a === b,
+			'!=': (a,b) => a != b,
+			'!==': (a,b) => a !== b,
 			'$=': (a,b) => a?.endsWith(b),
 			'^=': (a,b) => a?.startsWith(b),
 			'~=': (a,b) => b.test(a),
@@ -236,7 +238,7 @@ Wildcard
 Permitted_character 
 	= [A-Za-z0-9_];
 Reserved_character 
-	= $(Accessor / "+" / "~" / "[" / "]" / Wildcard / Escape_character / Reference_character / Operator / Union_Operator / _);
+	= $(Accessor / "+" / "[" / "]" / Wildcard / Escape_character / Reference_character / Operator / Union_Operator / _);
 Escape_character 
 	= "\\";
 /* A Symbol is a permitted character, or an escaped reserved character */
