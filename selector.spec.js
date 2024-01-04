@@ -262,7 +262,7 @@ describe('Selector semantics', function() {
 		});
 	});
 
-	describe('Parsing modes', function() {
+	describe('Selection modes', function() {
 		describe('Normal mode', function() {
 			it('should not throw when selecting a non-existing property that is the terminal part of its selector', function() {
 				const parser = parse('a');

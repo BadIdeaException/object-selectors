@@ -160,6 +160,9 @@ If you intend to re-use a given selector for multiple operations, pre-compiling 
 The returned compiled selector also has methods `perform`, `get`, and `set`, so instead of calling `get(compiledSelector, obj)` you can
 also do `compiledSelector.get(obj)`.
 
+In addition, `compiledSelector.ambiguous` is a boolean flag indicating whether or not the selector is ambiguous, and `compiledSelector.source`
+gives access to the source string the selector was compiled from.
+
 #### Parameters
 
 *   `selector` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** The selector to compile.
@@ -192,9 +195,12 @@ If it is unambiguous, the result is returned as a scalar. `options.collate` can 
 *   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation
 
     *   `options.collate` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
-    *   `options.mode` **(`"normal"` | `"strict"` | `"lenient"`)** The parsing mode to use. In `normal` mode, it is permissible to select a non-existent property
+    *   `options.mode` **(`"normal"` | `"strict"` | `"lenient"`)** The selection mode to use. In `normal` mode, it is permissible to select a non-existent property
         as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
-        mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).In `strict` mode, any attempt to select a non-existent property immediately results in an error.In `lenient` mode, non-existent properties are silently dropped.The default mode is `normal`. (optional, default `'normal'`)
+        mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
+        In `strict` mode, any attempt to select a non-existent property immediately results in an error.
+        In `lenient` mode, non-existent properties are silently dropped.
+        The default mode is `normal`. (optional, default `'normal'`)
     *   `options.references` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** The values for any references used in the selector.
 
 Returns **any** The results of applying `fn` to all selected properties.

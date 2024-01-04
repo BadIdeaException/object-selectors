@@ -84,7 +84,7 @@ export function compile(selector) {
  * @param  {Object}   obj      The object on whose properties to perform the function.
  * @param  {Object}   [options]  An optional object with further options for the operation
  * @param  {boolean}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
- * @param  {'normal'|'strict'|'lenient'}	[options.mode='normal'] The parsing mode to use. In `normal` mode, it is permissible to select a non-existent property
+ * @param  {'normal'|'strict'|'lenient'}	[options.mode='normal'] The selection mode to use. In `normal` mode, it is permissible to select a non-existent property
  * as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
  * mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
  * In `strict` mode, any attempt to select a non-existent property immediately results in an error.

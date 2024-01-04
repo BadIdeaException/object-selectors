@@ -82,7 +82,7 @@ describe('perform', function() {
 		});
 	});
 
-	describe('modes', function() {
+	describe('Selection modes', function() {
 		const fn = x => x + 1;
 
 		it('should throw when selecting non-existent properties in strict mode', function() {
