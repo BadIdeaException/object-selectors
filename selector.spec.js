@@ -22,7 +22,7 @@ describe('Selector syntax', function() {
 	describe('Identifiers', function() {
 		it('should throw on unescaped reserved characters in identifiers', function() {
 			const reserved = [
-				'.', '[', ']', '=='
+				'.', '[', ']', '==', ',', ' '
 			];
 
 			reserved.forEach(char =>
@@ -88,11 +88,11 @@ describe('Selector syntax', function() {
 		});
 	});
 
-	describe.skip('Selector Union', function() {
+	describe('Selector Union', function() {
 		it('should allow unioning selectors with a comma', function() {
-			expect(parse.bind(null, 'a, b')).to.not.throw();
+			expect(parse.bind(null, 'a.b.c, x.y.z')).to.not.throw();
 		});
-	})
+	});
 });
 
 describe('Selector semantics', function() {
@@ -396,20 +396,21 @@ describe('Selector semantics', function() {
 		});
 	});
 
-	describe.skip('Selector Union', function() {
+	describe('Selector Union', function() {
 		it('should return the concatenated results of all constituent selectors', function() {
-			const selector1 = 'a1';
-			const selector2 = 'a2';
-			const selector = `${selector1}, ${selector2}`;
+			const selector = `a1, a2`;
 
 			const obj = { a1: {}, a2: {}, b: {}, abc: {} };
 
 
 			const resolution = parse(selector)(obj);
 
-			expect(resolution).to.be.an('array').with.lengthOf(1);
-			expect(resolution[0]).to.have.property('target').that.equals(obj);
-			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1, a2' ]);
+			expect(resolution).to.be.an('array').with.lengthOf(2);
+			resolution.forEach((res, i) => {
+				const sel = [ 'a1', 'a2' ][i];
+				expect(res).to.have.property('target').that.equals(obj);
+				expect(res).to.have.property('selection').that.has.members([ sel ]);
+			});
 		});
 	});
 });

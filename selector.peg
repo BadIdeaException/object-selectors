@@ -4,6 +4,18 @@
 	const MODE_LENIENT = 2;
 }
 
+Union_Selector = selectors:Selector|1.., _* Union_Operator _*| {
+	return Object.assign(function union(obj, references, mode) {		
+		return selectors.flatMap(select => select(obj, references, mode))
+	}, {
+		// The selector is ambiguous if it is a union of more than one selectors, 
+		// or if there is only one selector and that selector is ambiguous itself
+		ambiguous: selectors.length > 1 || selectors[0].ambiguous, 
+		source: text()
+	});
+};
+Union_Operator = ",";
+
 /*
  * A selector is either the empty selector, or a series of property descriptors separated by the accessor operator ('.')
  */
@@ -224,7 +236,7 @@ Wildcard
 Permitted_character 
 	= [A-Za-z0-9_];
 Reserved_character 
-	= $(Accessor / "+" / "~" / "[" / "]" / Wildcard / Escape_character / Reference_character / Operator / _);
+	= $(Accessor / "+" / "~" / "[" / "]" / Wildcard / Escape_character / Reference_character / Operator / Union_Operator / _);
 Escape_character 
 	= "\\";
 /* A Symbol is a permitted character, or an escaped reserved character */
