@@ -12,12 +12,6 @@ you can simply write
 
     set('a.b*[c === foo].c', obj, 'bar')
 
-\\
-
-> :information\_source: **Note**: This is version 2.0 of this package. It introduces the following breaking changes:
->
-> *   `apply` was renamed to `perform`
-> *   The empty selector now selects the input object instead of nothing.
 
 ## Table of contents
 
@@ -105,6 +99,8 @@ Operator | Condition looks like | Meaning
 :--- | :--- | :---
 `==` | `a == b` | The value of property `a` is loosely equal to `b`
 `===` | `a === b` | The value of property `a` is strictly equal to `b`
+`!=` | `a != b` | The value of property `a` is not loosely equal to `b`
+`!==` | `a !== b` | The value of property `a` is not strictly equal to `b`
 `^=` | `a ^= b` | The value of property `a` starts with `b`: `a.startsWith(b)`
 `$=` | `a $= b` | The value of property `a` ends with `b`: `a.endsWith(b)`
 `~=` | `a ~= b` | The value of property `a` satisifies regular expression `b`: `new RegExp(b).test(a)`
@@ -112,6 +108,15 @@ Operator | Condition looks like | Meaning
 `<=` | `a <= b` | The value of property `a` is less than or equal to `b`
 `>=` | `a >= b` | The value of property `a` is greater than or equal to `b`
 `>` | `a > b` | The value of property `a` is strictly greater than `b`
+
+### Selector union
+
+The union of multiple selectors may be selected by separating them with a `,`. The result is the union of the results of the individual selectors:
+```
+get('a.b.c, 'd.*.f', obj) === [ get('a.b.c'), ...get('d.*.f') ]
+``` 
+
+Union selectors with more than one component are ambiguous.
 
 ## Examples
 
