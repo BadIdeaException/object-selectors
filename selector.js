@@ -243,7 +243,6 @@ function peg$parse(input, options) {
 	});
 };
   var peg$f1 = function(head, tail) { 
-		
 		return [ 
 			...head,  		// Spread operator: property descriptors are parsed as arrays (because they might include conditions)
 			...tail.flat()	// Spread operator: the tail is an array of Accessor_selectors because of the asterisk operator
@@ -269,6 +268,7 @@ function peg$parse(input, options) {
 	};
   var peg$f3 = function() { return input === '' };
   var peg$f4 = function() {
+		console.warn('Using the empty selector is deprecated. Use ::root instead.');
 		return Object.assign(function empty(obj) { 
 			return [ { target: { obj }, selection: [ 'obj' ] } ];
 		}, {

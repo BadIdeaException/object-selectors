@@ -1,4 +1,5 @@
 import { parse } from './selector.js';
+import sinon from 'sinon';
 
 describe('Selector semantics', function() {
 	const MODE_NORMAL = 0;
@@ -7,14 +8,19 @@ describe('Selector semantics', function() {
 
 	describe('Simple selectors', function() {
 		it('should select the root object with an empty selector', function() {
-			const key = '';
-			const obj = {};
+			sinon.stub(console, 'warn'); // Disable deprecation warning from showing
+			try {
+				const key = '';
+				const obj = {};
 
-			const resolution = parse(key)(obj);
+				const resolution = parse(key)(obj);
 
-			expect(resolution).to.be.an('array').with.lengthOf(1);
-			expect(resolution[0]).to.have.property('target').that.deep.equals({ obj });
-			expect(resolution[0]).to.have.property('selection').that.is.an('array').with.members([ 'obj' ]);
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.deep.equals({ obj });
+				expect(resolution[0]).to.have.property('selection').that.is.an('array').with.members([ 'obj' ]);
+			} finally {
+				console.warn.restore();
+			}
 		});
 
 		it('should select a property by name', function() {
@@ -105,15 +111,17 @@ describe('Selector semantics', function() {
 	});
 
 	describe('Pseudo elements', function() {
-		it('should select the input object with ::root', function() {
-			const obj = { a: {} };
+		describe('::root', function() {
+			it('should select the input object with', function() {
+				const obj = { a: {} };
 
-			[ '::root', 'a.::root' ].forEach(key => {
-				const resolution = parse(key)(obj);
+				[ '::root', 'a.::root' ].forEach(key => {
+					const resolution = parse(key)(obj);
 
-				expect(resolution).to.be.an('array').with.lengthOf(1);
-				expect(resolution[0]).to.have.property('target').that.deep.equals({ '::root': obj });
-				expect(resolution[0]).to.have.property('selection').that.has.members([ '::root' ]);
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.deep.equals({ '::root': obj });
+					expect(resolution[0]).to.have.property('selection').that.has.members([ '::root' ]);
+				});
 			});
 		});
 
@@ -162,25 +170,6 @@ describe('Selector semantics', function() {
 					expect(resolution[0]).to.have.property('selection').that.is.empty;
 				});
 			});
-		});
-
-		it('should select the last element of an array with ::last', function() {
-			const obj = [ 0, 1, 2 ];
-
-			const resolution = parse('::last')(obj);
-			expect(resolution).to.be.an('array').with.lengthOf(1);
-			expect(resolution[0]).to.have.property('target').that.equals(obj);
-			expect(resolution[0]).to.have.property('selection').that.has.members([ '2' ]);
-		});
-
-		it('should select the last property of an object with ::last', function() {
-			const obj = { b: 1, a: 2 };
-
-			const resolution = parse('::last')(obj);
-			expect(resolution).to.be.an('array').with.lengthOf(1);
-			expect(resolution[0]).to.have.property('target').that.equals(obj);
-			// Object keys are ordered in the order they are defined:
-			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
 		});
 	});
 

@@ -1,12 +1,28 @@
 import { parse } from './selector.js';
+import sinon from 'sinon';
 
 describe('Selector syntax', function() {
 	const WILDCARDS = [ '*', '?' ];
 	const OPERATORS = [ '==', '===', '!=', '!==', '^=', '$=', '~=', '<', '<=', '>=', '>' ];
 	const ACCESSOR = '.';
 
-	it('should allow the empty selector', function() {
-		expect(parse.bind(null, '')).to.not.throw();
+	describe('Empty selector', function() {
+		beforeEach(function() {
+			sinon.stub(console, 'warn');
+		});
+
+		afterEach(function() {
+			console.warn.restore();
+		});
+
+		it('should allow the empty selector', function() {
+			expect(parse.bind(null, '')).to.not.throw();
+		});
+
+		it('should issue a deprecation warning', function() {
+			parse('');
+			expect(console.warn).to.have.been.calledWith(sinon.match(/deprecated/));
+		});
 	});
 
 	describe('Accessor selectors', function() {

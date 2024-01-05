@@ -60,6 +60,8 @@ Note that ambiguity is a property of the selector itself, independent the result
 
 The empty string `''` is called the **empty** selector. By definition, it selects the input object.
 
+_Note: This behavior is deprecated and now discouraged. It may be changed in the future. Use [::root](#pseudo-elements) instead._
+
 ## Notation
 
 `object-selectors` comes with its own selector language that takes elements from Javascript notation, file globs and CSS selectors and combines them into the powerful notation outlined below.

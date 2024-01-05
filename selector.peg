@@ -22,7 +22,6 @@ Union_Operator = ",";
 Selector 
 	= Empty_selector /
 	selector:(head:Property_descriptor tail:Accessor_selector* { 
-		
 		return [ 
 			...head,  		// Spread operator: property descriptors are parsed as arrays (because they might include conditions)
 			...tail.flat()	// Spread operator: the tail is an array of Accessor_selectors because of the asterisk operator
@@ -48,6 +47,7 @@ Selector
 
 Empty_selector
 	= &{ return input === '' } {
+		console.warn('Using the empty selector is deprecated. Use ::root instead.');
 		return Object.assign(function empty(obj) { 
 			return [ { target: { obj }, selection: [ 'obj' ] } ];
 		}, {
