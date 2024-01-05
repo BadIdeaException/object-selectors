@@ -14,51 +14,63 @@ function _perform(select, fn, obj, options) {
 
 
 	let resolution = select(obj, options?.references, mode);
-	// Normalize resolution such that each entry contains only one property to select
-	resolution = resolution.flatMap(item => item.selection.map(sel => ({
-		...item, selection: sel
-	})));
-	// For all entries in resolution, selection is now a scalar (instead of an array)
 
 	if (options?.unique) {
 		// If options.unique === true, default to strict equality as the comparator
 		const comp = typeof options.unique === 'function' ? options.unique : (a, b) => a === b;
-		// Run through the resolutions and remove any duplicates, as determined by the comparator function
+		// Run through the resolutions and for all selections, remove any duplicates, as determined by the comparator function.
+		// 
+		// For this, only check items' selections that come AFTER the current one, e.g. given the following resolutions:
+		//       a       b
+		//     0 1 2   0   1		a0 a1 a2 b0 b2
+		// 							   ^   ^
+		// 							   |   |
+		//				when (i,j) are here...
+		// 							...start (k,l) checking from here
 		for (let i = 0; i < resolution.length; i++)
-			if (resolution[i] !== undefined)
-				for (let j = i + 1; j < resolution.length; j++) {
-					const a = resolution[i].target[resolution[i].selection];
-					const b = resolution[j]?.target[resolution[j].selection];
-					if (b !== undefined && comp(a, b))
-						// Just delete for now, because that is faster than repeated splicing.
-						// We will remove all deleted entries at the end.
-						delete resolution[j];
-			}
-		resolution = resolution.filter(item => item !== undefined);
+			for (let j = 0; j < resolution[i].selection.length; j++)
+				for (let k = i; k < resolution.length; k++) {
+					for (let l = k === i ? j + 1 : 0; l < resolution[k].selection.length; l++) {
+						const a = resolution[i].target[resolution[i].selection[j]];
+						const b = resolution[k].target[resolution[k].selection[l]];
+						if (b !== undefined && comp(a, b))
+							// Just delete for now, because that is faster than repeated splicing.
+							// We will remove all deleted entries at the end.
+							delete resolution[k].selection[l];
+					}
+					resolution[k].selection = resolution[k].selection.filter(sel => sel !== undefined);
+				}
 	}
 
-	for (let item of resolution) {
-		const value = fn(item.target[item.selection], item.selection, item.target);
-		// Only assign new value if it is different
-		// This is important so that read operations will work even on read-only (e.g. frozen) objects
-		// In read-only mode, NEVER attempt to set a new value. This is important so that dynamically generated properties
-		// can still be accessed, i.e. getters that create a new object every time.
-		if (!options?.readonly && value !== item.target[item.selection])
-			item.target[item.selection] = value;
-		result.push(value);
-	}
+	for (let item of resolution)
+		for (let property of item.selection) {
+			const value = fn(item.target[property], property, item.target);
+			// Only assign new value if it is different
+			// This is important so that read operations will work even on read-only (e.g. frozen) objects
+			// In read-only mode, NEVER attempt to set a new value. This is important so that dynamically generated properties
+			// can still be accessed, i.e. getters that create a new object every time.
+			if (!options?.readonly && value !== item.target[property])
+				item.target[property] = value;
+			result.push(value);
+		}
 
 	// If collating - either by default or by user choice - check that all results are equal, and if they
 	// are, return their value. Otherwise throw an error.
-	if (options?.collate) {
-		const comp = typeof options.collate === 'function' ? options.collate : function deepequal(a, b) {
-			return JSON.stringify(a) === JSON.stringify(b);
-		};
-		for (let i = 0; i < result.length; i++)
-			for (let j = i + 1; j < result.length; j++)
-				if (!comp(result[i], result[j]))
+	if (options?.collate)
+		switch (result.length) {
+		// Speed up the process - if there are not at least two values, there is no need to run the (potentially expensive) assessor function
+		case 0: result = undefined; break;
+		case 1: result = result[0]; break;
+		default: {
+			// The function used to calculate a value to use for equality comparison
+			const assess = typeof options.collate === 'function' ? options.collate : JSON.stringify;
+			// The reference value to compare all subsequent results against
+			const ref = assess(result[0]);
+			for (let i = 1; i < result.length; i++)
+				if (assess(result[i]) !== ref)
 					throw new CollationError(`Expected all results to be equal when collating for selector ${select.source} but they were not`);
 			result = result[0];
+		}
 	}
 
 	return result;
@@ -99,7 +111,8 @@ export function compile(selector) {
  * - Setting `options.collate` to `false` will _always_ return an array, even if there is only one result.
  * - Setting `options.collate` to `true` will check that all results are deeply equal, and if they are, return their value as a scalar.
  * If the results are not all deeply equal, an error will be thrown. (Note that the function will still have been applied, though.)
- * - Setting `options.collate` to a function value will check that all results are equal by using the function for pairwise comparison.
+ * - Setting `options.collate` to a function value will check that after applying that function to all results they are all equal. Note that
+ * the function is only used for determining collation equality -- the returned results are still the same.
  *
  * _Note: In versions prior 2.0, this function was called `apply`. This has been changed to `perform` to avoid a name conflict with
  * `Function.prototype.apply` in compiled selectors._
@@ -109,8 +122,8 @@ export function compile(selector) {
  * @param  {Object}   obj      The object on whose properties to perform the function.
  * @param  {Object}   [options]  An optional object with further options for the operation
  * @param  {boolean|function}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
- * When collating, an error is thrown if the results of applying `fn` to all selected properties are not all deeply equal.
- * If set to a comparator function, this function is used instead of deep equality.
+ * When collating, an error is thrown if the results of applying `fn` to all selected properties are not all strictly equal in terms of their JSON representation.
+ * If set to a function, this function is applied to all results, then those results are checked for (strict) equality.
  * Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
  * @param  {boolean|function} [options.unique] Whether to filter out duplicate values before applying `fn`. If set to `true`, strict equality is
  * used to compare values. Alternatively, can be set to a comparator function which will then be used to determine equality. For duplicate values,

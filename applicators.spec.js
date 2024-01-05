@@ -81,15 +81,14 @@ describe('perform', function() {
 			expect(perform.bind(null, 'a.b*.c', fn, obj, { collate: true })).to.throw(CollationError);
 		});
 
-		it('should use the comparator function when collate is set to a function', function() {
-			const comp = sinon.spy(() => true);
+		it('should use the assessor function when collate is set to a function', function() {
+			const assess = sinon.spy(() => 0);
 			const obj = { a: 1, b: 2, c: 3 }
 
-			expect(perform('*', fn, obj, { collate: comp }), 'should have collated to the first selected item')
-				.to.equal(fn(1));
-			Object.values(obj).forEach((a, idx) =>
-				Object.values(obj).slice(idx + 1).forEach(b =>
-					expect(comp, 'should have compared all values').to.have.been.calledWith(a, b)));
+			expect(perform('*', fn, obj, { collate: assess }), 'should have collated to the first selected item').to.equal(fn(1));
+			expect(assess).to.have.callCount(Object.values(obj).length);
+			Object.values(obj).forEach(val =>
+				expect(assess, `should have assessed value ${val} exactly once`).to.have.been.calledWith(val));
 		});
 	});
 
