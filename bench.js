@@ -36,7 +36,9 @@ new Benchmark.Suite('object-selectors vs. easy-object-selector')
 		getvalue(obj, selector);
 	})
 	.on('cycle', function(event) {
-		console.log(String(event.target));
+		console.log(String(event.target)
+			// Replace " x ", if followed immediately by a digit, with " | "
+			.replace(/ x (?=\d)/, ' | '));
 	})
 	.on('complete', function() {
 		console.log('Fastest is ' + this.filter('fastest').map('name'));
