@@ -13,28 +13,52 @@ function _perform(select, fn, obj, options) {
 	const mode = { 'strict': 1, 'lenient': 2 }[options?.mode?.toLowerCase()];
 
 
-	const resolution = select(obj, options?.references, mode);
+	let resolution = select(obj, options?.references, mode);
+	// Normalize resolution such that each entry contains only one property to select
+	resolution = resolution.flatMap(item => item.selection.map(sel => ({
+		...item, selection: sel
+	})));
+	// For all entries in resolution, selection is now a scalar (instead of an array)
+
+	if (options?.unique) {
+		// If options.unique === true, default to strict equality as the comparator
+		const comp = typeof options.unique === 'function' ? options.unique : (a, b) => a === b;
+		// Run through the resolutions and remove any duplicates, as determined by the comparator function
+		for (let i = 0; i < resolution.length; i++)
+			if (resolution[i] !== undefined)
+				for (let j = i + 1; j < resolution.length; j++) {
+					const a = resolution[i].target[resolution[i].selection];
+					const b = resolution[j]?.target[resolution[j].selection];
+					if (b !== undefined && comp(a, b))
+						// Just delete for now, because that is faster than repeated splicing.
+						// We will remove all deleted entries at the end.
+						delete resolution[j];
+			}
+		resolution = resolution.filter(item => item !== undefined);
+	}
+
 	for (let item of resolution) {
-		for (let property of item.selection) {
-			const value = fn(item.target[property], property, item.target);
-			// Only assign new value if it is different
-			// This is important so that read operations will work even on read-only (e.g. frozen) objects
-			// In read-only mode, NEVER attempt to set a new value. This is important so that dynamically generated properties
-			// can still be accessed, i.e. getters that create a new object every time.
-			if (!options?.readonly && value !== item.target[property])
-				item.target[property] = value;
-			result.push(value);
-		}
+		const value = fn(item.target[item.selection], item.selection, item.target);
+		// Only assign new value if it is different
+		// This is important so that read operations will work even on read-only (e.g. frozen) objects
+		// In read-only mode, NEVER attempt to set a new value. This is important so that dynamically generated properties
+		// can still be accessed, i.e. getters that create a new object every time.
+		if (!options?.readonly && value !== item.target[item.selection])
+			item.target[item.selection] = value;
+		result.push(value);
 	}
 
 	// If collating - either by default or by user choice - check that all results are equal, and if they
 	// are, return their value. Otherwise throw an error.
 	if (options?.collate) {
-		const json = JSON.stringify(result[0]);
-		for (let i = 1; i < result.length; i++)
-			if (json !== JSON.stringify(result[i]))
-				throw new CollationError(`Expected all results to be equal when collating for selector ${select.source} but they were not`);
-		result = result[0];
+		const comp = typeof options.collate === 'function' ? options.collate : function deepequal(a, b) {
+			return JSON.stringify(a) === JSON.stringify(b);
+		};
+		for (let i = 0; i < result.length; i++)
+			for (let j = i + 1; j < result.length; j++)
+				if (!comp(result[i], result[j]))
+					throw new CollationError(`Expected all results to be equal when collating for selector ${select.source} but they were not`);
+			result = result[0];
 	}
 
 	return result;
@@ -75,6 +99,7 @@ export function compile(selector) {
  * - Setting `options.collate` to `false` will _always_ return an array, even if there is only one result.
  * - Setting `options.collate` to `true` will check that all results are deeply equal, and if they are, return their value as a scalar.
  * If the results are not all deeply equal, an error will be thrown. (Note that the function will still have been applied, though.)
+ * - Setting `options.collate` to a function value will check that all results are equal by using the function for pairwise comparison.
  *
  * _Note: In versions prior 2.0, this function was called `apply`. This has been changed to `perform` to avoid a name conflict with
  * `Function.prototype.apply` in compiled selectors._
@@ -83,7 +108,15 @@ export function compile(selector) {
  * @param  {Function} fn       The function to perform.
  * @param  {Object}   obj      The object on whose properties to perform the function.
  * @param  {Object}   [options]  An optional object with further options for the operation
- * @param  {boolean}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
+ * @param  {boolean|function}  [options.collate] Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
+ * When collating, an error is thrown if the results of applying `fn` to all selected properties are not all deeply equal.
+ * If set to a comparator function, this function is used instead of deep equality.
+ * Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
+ * @param  {boolean|function} [options.unique] Whether to filter out duplicate values before applying `fn`. If set to `true`, strict equality is
+ * used to compare values. Alternatively, can be set to a comparator function which will then be used to determine equality. For duplicate values,
+ * only the first occurence is kept. Note that `options.unique` differs from `options.collate` in that it filters the selection _before_ the
+ * function is applied.
+ * Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
  * @param  {'normal'|'strict'|'lenient'}	[options.mode='normal'] The selection mode to use. In `normal` mode, it is permissible to select a non-existent property
  * as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
  * mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).

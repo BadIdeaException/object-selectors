@@ -113,9 +113,8 @@ Operator | Condition looks like | Meaning
 ### Selector union
 
 The union of multiple selectors may be selected by separating them with a `,`. The result is the union of the results of the individual selectors:
-```
-get('a.b.c, 'd.*.f', obj) === [ get('a.b.c'), ...get('d.*.f') ]
-``` 
+
+    get('a.b.c, 'd.*.f', obj) === [ get('a.b.c'), ...get('d.*.f') ]
 
 Union selectors with more than one component are ambiguous.
 
@@ -198,6 +197,7 @@ If it is unambiguous, the result is returned as a scalar. `options.collate` can 
 *   Setting `options.collate` to `false` will *always* return an array, even if there is only one result.
 *   Setting `options.collate` to `true` will check that all results are deeply equal, and if they are, return their value as a scalar.
     If the results are not all deeply equal, an error will be thrown. (Note that the function will still have been applied, though.)
+*   Setting `options.collate` to a function value will check that all results are equal by using the function for pairwise comparison.
 
 *Note: In versions prior 2.0, this function was called `apply`. This has been changed to `perform` to avoid a name conflict with
 `Function.prototype.apply` in compiled selectors.*
@@ -210,7 +210,15 @@ If it is unambiguous, the result is returned as a scalar. `options.collate` can 
 *   `obj` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The object on whose properties to perform the function.
 *   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation
 
-    *   `options.collate` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
+    *   `options.collate` **([boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) | [function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function))?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
+        When collating, an error is thrown if the results of applying `fn` to all selected properties are not all deeply equal.
+        If set to a comparator function, this function is used instead of deep equality.
+        Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
+    *   `options.unique` **([boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) | [function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function))?** Whether to filter out duplicate values before applying `fn`. If set to `true`, strict equality is
+        used to compare values. Alternatively, can be set to a comparator function which will then be used to determine equality. For duplicate values,
+        only the first occurence is kept. Note that `options.unique` differs from `options.collate` in that it filters the selection *before* the
+        function is applied.
+        Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
     *   `options.mode` **(`"normal"` | `"strict"` | `"lenient"`)** The selection mode to use. In `normal` mode, it is permissible to select a non-existent property
         as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
         mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
@@ -260,7 +268,7 @@ how many properties matched the selector.
 There are a few other libraries that do the same thing, although none offer the features and expressive powers of this one. In particular, none allow using wildcards in selectors, conditions, or application of arbitrary functions - that's why I wrote this in the first place. That power comes at a price, though, and that price is speed. Below are benchmark results comparing `object-selectors` with some of the competitors.
 
 Library | ops/sec
-\---|---:
+:---|---:
 object-selectors (string selector, collation auto) | 85,938 ops/sec ±15.56% (93 runs sampled)
 object-selectors (pre-compiled, collation auto) | 844,536 ops/sec ±9.73% (76 runs sampled)
 object-selectors (pre-compiled, collation off) | 1,106,929 ops/sec ±2.19% (93 runs sampled)

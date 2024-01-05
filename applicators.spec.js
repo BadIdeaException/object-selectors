@@ -80,6 +80,45 @@ describe('perform', function() {
 		it('should throw when collating and not all results are equal', function() {
 			expect(perform.bind(null, 'a.b*.c', fn, obj, { collate: true })).to.throw(CollationError);
 		});
+
+		it('should use the comparator function when collate is set to a function', function() {
+			const comp = sinon.spy(() => true);
+			const obj = { a: 1, b: 2, c: 3 }
+
+			expect(perform('*', fn, obj, { collate: comp }), 'should have collated to the first selected item')
+				.to.equal(fn(1));
+			Object.values(obj).forEach((a, idx) =>
+				Object.values(obj).slice(idx + 1).forEach(b =>
+					expect(comp, 'should have compared all values').to.have.been.calledWith(a, b)));
+		});
+	});
+
+	describe('uniqueness', function() {
+		it('should only use the first occurence of each value when unique is set to true', function() {
+			const x = {};
+			const obj = {
+				a: x,
+				b: x
+			}
+			const fn = sinon.spy(() => 0);
+
+			perform('*', fn, obj, { unique: true });
+
+			expect(obj).to.deep.equal({ a: 0, b: x });
+			expect(fn).to.have.been.calledOnceWith(x, 'a', obj);
+		});
+
+		it('should use the comparator function to determine equality when unique is set to a function value', function() {
+			const obj = {
+				a: 1,
+				b: 2
+			}
+			const comparator = sinon.spy(() => true);
+
+			perform('*', () => 0, obj, { unique: comparator });
+			expect(comparator).to.have.been.calledWith(1, 2);
+			expect(obj).to.deep.equal({ a: 0, b: 2 });
+		});
 	});
 
 	describe('Selection modes', function() {
