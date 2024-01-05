@@ -36,6 +36,16 @@ new Benchmark.Suite('object-selectors vs. easy-object-selector')
 		getvalue(obj, selector);
 	})
 	.on('cycle', function(event) {
+		const links = {
+			'easy-object-selector': 'https://github.com/deltavi/easy-object-selector',
+			'object-path': 'https://github.com/mariocasciaro/object-path',
+			'dot-prop': 'https://github.com/sindresorhus/dot-prop',
+			'pathval': 'https://github.com/chaijs/pathval',
+			'getvalue': 'https://github.com/jonschlinkert/get-value'
+		}
+		// Replace competitors with markdown links
+		if (event.target.name in links)
+			event.target.name = `[${event.target.name}](${links[event.target.name]})`;
 		console.log(String(event.target)
 			// Replace " x ", if followed immediately by a digit, with " | "
 			.replace(/ x (?=\d)/, ' | '));
