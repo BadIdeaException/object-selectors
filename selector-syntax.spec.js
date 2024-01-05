@@ -22,7 +22,7 @@ describe('Selector syntax', function() {
 	describe('Identifiers', function() {
 		it('should throw on unescaped reserved characters in identifiers', function() {
 			const reserved = [
-				'.', '[', ']', ...OPERATORS, ',', ' '
+				'.', '[', ']', ...OPERATORS, ',', ' ', ':'
 			];
 
 			reserved.forEach(char =>
@@ -32,7 +32,7 @@ describe('Selector syntax', function() {
 
 		it('should not throw on escaped reserved characters in identifiers', function() {
 			const reserved = [
-				'.', '[', ']', ...OPERATORS, '*', '?'
+				'.', '[', ']', ...OPERATORS, '*', '?', ':'
 			];
 
 			reserved.forEach(char =>
@@ -55,6 +55,17 @@ describe('Selector syntax', function() {
 		it('should allow double wildcards except double asterisks', function() {
 			[ '*?', '?*', '??' ].forEach(combination => expect(parse.bind(null, combination), combination).to.not.throw());
 			expect(parse.bind(null, '**'), '**').to.throw();
+		});
+	});
+
+	describe('Pseudo elements', function() {
+		it('should allow ::root', function() {
+			expect(parse.bind(null, '::root')).to.not.throw();
+		});
+
+		it('should allow ::first and ::last', function() {
+			expect(parse.bind(null, '::first')).to.not.throw();
+			expect(parse.bind(null, '::last')).to.not.throw();
 		});
 	});
 

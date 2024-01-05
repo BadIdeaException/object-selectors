@@ -104,6 +104,86 @@ describe('Selector semantics', function() {
 		});
 	});
 
+	describe('Pseudo elements', function() {
+		it('should select the input object with ::root', function() {
+			const obj = { a: {} };
+
+			[ '::root', 'a.::root' ].forEach(key => {
+				const resolution = parse(key)(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.deep.equals({ '::root': obj });
+				expect(resolution[0]).to.have.property('selection').that.has.members([ '::root' ]);
+			});
+		});
+
+		// eslint-disable-next-line mocha/no-setup-in-describe
+		[ 'first', 'last' ].forEach((pseudo, index) => {
+			describe(`::${pseudo}`, function() {
+				it(`should select the ${pseudo} element of an array`, function() {
+					const obj = [ 0, 1 ];
+
+					const resolution = parse(`::${pseudo}`)(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.has.members([ String(index) ]);
+				});
+
+				it(`should select the ${pseudo} property of an object`, function() {
+					const obj = { a: 1, b: 2 };
+
+					const resolution = parse(`::${pseudo}`)(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.has.members([ 'ab'[index] ]);
+				});
+
+				it(`should select the ${pseudo} character of a string`, function() {
+					const obj = 'ab';
+
+					const resolution = parse(`::${pseudo}`)(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					// Object keys are ordered in the order they are defined:
+					expect(resolution[0]).to.have.property('selection').that.has.members([ String(index) ]);
+				});
+
+				it('should select nothing on anything else', function() {
+					const obj = 1;
+
+					const resolution = parse(`::${pseudo}`)(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					// Object keys are ordered in the order they are defined:
+					expect(resolution[0]).to.have.property('selection').that.is.empty;
+				});
+			});
+		});
+
+		it('should select the last element of an array with ::last', function() {
+			const obj = [ 0, 1, 2 ];
+
+			const resolution = parse('::last')(obj);
+			expect(resolution).to.be.an('array').with.lengthOf(1);
+			expect(resolution[0]).to.have.property('target').that.equals(obj);
+			expect(resolution[0]).to.have.property('selection').that.has.members([ '2' ]);
+		});
+
+		it('should select the last property of an object with ::last', function() {
+			const obj = { b: 1, a: 2 };
+
+			const resolution = parse('::last')(obj);
+			expect(resolution).to.be.an('array').with.lengthOf(1);
+			expect(resolution[0]).to.have.property('target').that.equals(obj);
+			// Object keys are ordered in the order they are defined:
+			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+		});
+	});
+
 	describe('Conditional selectors', function() {
 		it('should select with complex selectors in conditions', function() {
 			const obj = {

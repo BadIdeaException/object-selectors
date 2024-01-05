@@ -36,6 +36,7 @@ Selector
 			const resolution = [
 				{ target: obj, selection: [] }
 			]
+			resolution.root = obj;
 			selector?.forEach(element => element(resolution, references, mode));
 			return resolution;
 		}, { 
@@ -147,6 +148,51 @@ Property_name
 			resolution.forEach(item => item.selection = [ name ]);
 		}          
 	}
+	/ pseudo:Pseudo_Element {
+		function selectRoot(resolution) {
+			resolution.forEach(item => {
+				item.target = { '::root': resolution.root };
+				item.selection = [ '::root' ];
+			});			
+		}
+		function selectFirst(resolution) {
+			resolution.forEach(item => {
+				if (Array.isArray(item.target) || typeof item.target === 'string') 
+					item.selection = [ '0' ];
+				else if (typeof item.target === 'object' && item.target !== null) 
+					// We have to do this via a for...in loop that we break from immediately,
+					// in order to catch INHERITED properties as well as own
+					for (let key in item.target) {
+						item.selection = [ key ];
+						break; 
+					}
+				else
+					item.selection = [];
+			});
+		}
+		function selectLast(resolution) {
+			resolution.forEach(item => {
+				if (Array.isArray(item.target) || typeof item.target === 'string')
+					item.selection = [ String(item.target.length - 1) ];
+				else if (typeof item.target === 'object' && item.target !== null) 
+					// We have to do this via a for...in loop that we break from immediately,
+					// in order to catch INHERITED properties as well as own
+					for (let key in item.target) {
+						item.selection = [ key ];						
+					}
+				else
+					item.selection = [];
+			});
+		}
+		const PSEUDO_ELEMENTS = {
+			'::root': selectRoot,
+			'::first': selectFirst,
+			'::last': selectLast
+		}
+		return PSEUDO_ELEMENTS[pseudo];
+	}
+
+
 
 /*
  * A condition is a unary condition or a binary condition, enclosed in square brackets. 
@@ -239,11 +285,12 @@ Wildcard
 		}
 	}
 
+Pseudo_Element = "::root" / "::first" / "::last";
 
 Permitted_character 
 	= [A-Za-z0-9_];
 Reserved_character 
-	= $(Accessor / "+" / "[" / "]" / Wildcard / Escape_character / Reference_character / Operator / Union_Operator / _);
+	= $(Accessor / "+" / "[" / "]" / ":" / Wildcard / Escape_character / Reference_character / Operator / Union_Operator / _);
 Escape_character 
 	= "\\";
 /* A Symbol is a permitted character, or an escaped reserved character */

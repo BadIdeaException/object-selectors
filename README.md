@@ -119,6 +119,16 @@ get('a.b.c, 'd.*.f', obj) === [ get('a.b.c'), ...get('d.*.f') ]
 
 Union selectors with more than one component are ambiguous.
 
+### Pseudo elements
+
+Pseudo elements start with a double colon `::` and select "virtual" properties.
+
+Pseudo element | Meaning | Example
+:--- | :--- | :---
+`::root` | Selects the input object itself. | `a.b.::root` selects `obj`
+`::first` | Selects the first element of an array, the first property of an object, or the first character of a string. Selects nothing on anything else. | `arr.::first` selects the first element of array `arr`. (Same as `arr.0`)
+`::last` | Selects the last element of an array, the last property of an object, or the last character of a string. Selects nothing on anthing else. | `str.::last` selects the last character of string `str`
+
 ## Examples
 
     const obj = {
