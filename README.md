@@ -269,14 +269,14 @@ There are a few other libraries that do the same thing, although none offer the 
 
 Library | ops/sec
 :---|---:
-object-selectors (string selector, collation auto) | 85,938 ops/sec ±15.56% (93 runs sampled)
-object-selectors (pre-compiled, collation auto) | 844,536 ops/sec ±9.73% (76 runs sampled)
-object-selectors (pre-compiled, collation off) | 1,106,929 ops/sec ±2.19% (93 runs sampled)
-[easy-object-selector](https://github.com/deltavi/easy-object-selector) | 4,080,250 ops/sec ±1.58% (93 runs sampled)
-[object-path](https://github.com/mariocasciaro/object-path) | 997,770 ops/sec ±6.47% (81 runs sampled)
-[dot-prop](https://github.com/sindresorhus/dot-prop) | 3,310,430 ops/sec ±8.16% (70 runs sampled)
-[pathval](https://github.com/chaijs/pathval) | 275,348 ops/sec ±4.44% (64 runs sampled)
-[getvalue](https://github.com/jonschlinkert/get-value) | 2,342,407 ops/sec ±3.62% (84 runs sampled)
+object-selectors (string) | 80,581 ops/sec ±12.09% (89 runs sampled)
+object-selectors (pre-compiled) | 570,986 ops/sec ±1.46% (89 runs sampled)
+object-selectors (pre-compiled, no collation) | 552,592 ops/sec ±1.99% (92 runs sampled)
+[easy-object-selector](https://github.com/deltavi/easy-object-selector) | 4,175,650 ops/sec ±0.51% (92 runs sampled)
+[object-path](https://github.com/mariocasciaro/object-path) | 1,125,960 ops/sec ±0.55% (93 runs sampled)
+[dot-prop](https://github.com/sindresorhus/dot-prop) | 4,115,248 ops/sec ±1.09% (90 runs sampled)
+[pathval](https://github.com/chaijs/pathval) | 403,030 ops/sec ±1.16% (90 runs sampled)
+[getvalue](https://github.com/jonschlinkert/get-value) | 2,628,437 ops/sec ±0.49% (92 runs sampled)
 
 The key take aways:
 
