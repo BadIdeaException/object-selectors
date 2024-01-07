@@ -23,6 +23,15 @@ describe('perform', function() {
 		expect(fn).to.have.been.calledWith(obj.a.b2.c);
 	});
 
+	it('should pass value, property, context to the function', function() {
+		const fn = sinon.spy();
+		const c = obj.a.b1.c;
+
+		perform('a.b1.c', fn, obj);
+
+		expect(fn).to.have.been.calledWith(c, 'c', sinon.match.same(obj.a.b1));
+	});
+
 	it('should set matching properties to the result value', function() {
 		const fn = x => x + 1;
 		const expected = structuredClone(obj);
