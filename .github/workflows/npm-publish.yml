@@ -4,31 +4,31 @@
 name: Publish to npm
 
 on:
-	release:
- 		# Unlike in the original at the above link, only publish stable releases to npm, not prereleases & drafts
-		types: [released] 
+  release:
+    # Unlike in the original at the above link, only publish stable releases to npm, not prereleases & drafts
+    types: [released] 
 
 jobs:
-	build:
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v3
-			- uses: actions/setup-node@v3
-				with:
-					node-version: 20
-			- run: npm clean-install
-			- run: npm test
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: npm clean-install
+      - run: npm test
 
-	publish-npm:
-		needs: build
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v3
-			- uses: actions/setup-node@v3
-				with:
-					node-version: 20
-					registry-url: https://registry.npmjs.org/
-			- run: npm clean-install
-			- run: npm publish
-				env:
-					NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: npm clean-install
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
