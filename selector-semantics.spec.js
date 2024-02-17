@@ -274,6 +274,16 @@ describe('Selector semantics', function() {
 			expect(resolution[0]).to.have.property('target').that.equals(obj);
 			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
 		});
+
+		it('should combine multiple conditions with logical and', function() {
+			const obj = { a1: { b: 'x', c: 'y' }, a2: { b: 'x', c: 'not y' }};
+
+			const resolution = parse('a*[b===x][c===y]')(obj);
+
+			expect(resolution).to.be.an('array').with.lengthOf(1);
+			expect(resolution[0]).to.have.property('target').that.equals(obj);
+			expect(resolution[0]).to.have.property('selection').that.has.members([ 'a1' ]);
+		});
 	});
 
 	describe('Selection modes', function() {
