@@ -271,9 +271,9 @@ There are a few other libraries that do the same thing, although none offer the 
 
 Library | ops/sec
 :---|---:
-object-selectors (string) | 80,581 ops/sec ±12.09% (89 runs sampled)
-object-selectors (pre-compiled) | 570,986 ops/sec ±1.46% (89 runs sampled)
-object-selectors (pre-compiled, no collation) | 552,592 ops/sec ±1.99% (92 runs sampled)
+object-selectors (string) | 77,186 ops/sec ±10.09% (88 runs sampled)
+object-selectors (pre-compiled) | 971,047 ops/sec ±2.05% (92 runs sampled)
+object-selectors (pre-compiled, no collation) | 887,305 ops/sec ±0.88% (93 runs sampled)
 [easy-object-selector](https://github.com/deltavi/easy-object-selector) | 4,175,650 ops/sec ±0.51% (92 runs sampled)
 [object-path](https://github.com/mariocasciaro/object-path) | 1,125,960 ops/sec ±0.55% (93 runs sampled)
 [dot-prop](https://github.com/sindresorhus/dot-prop) | 4,115,248 ops/sec ±1.09% (90 runs sampled)
@@ -283,7 +283,7 @@ object-selectors (pre-compiled, no collation) | 552,592 ops/sec ±1.99% (92 runs
 The key take aways:
 
 1.  If you only need to access simple nested properties in objects and performance is a concern, you should probably go with a different library.
-2.  Pre-compiling a repeatedly-used selector gives a performance gain of about factor 100.
+2.  Pre-compiling a repeatedly-used selector gives a performance gain of more than factor 100.
 
 ## Security considerations
 
