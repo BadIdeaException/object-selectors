@@ -65,7 +65,7 @@ Accessor_selector
 	};
 	
 Accessor 
-	= "." {
+	= _* "." _* {
 		return function access(resolution) {
 			let result = [];
 			for (let item of resolution) {
@@ -86,7 +86,7 @@ Accessor
  * a series of conditions.
  */
 Property_descriptor 
-	= property:Property_name condition:Condition* { 
+	= property:Property_name _* condition:Condition* { 
 		// This is faster than doing [ property, ...condition, validate ]
 		condition.unshift(property);
 		condition.push(
@@ -304,4 +304,4 @@ Symbol
 	= Escape_character char:Reserved_character { return char; }
 	/ Permitted_character;
 _ "whitespace" 
-	= [ \t] { return; }
+	= [ \t\n] { return; }

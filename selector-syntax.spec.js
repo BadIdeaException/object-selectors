@@ -5,6 +5,17 @@ describe('Selector syntax', function() {
 	const WILDCARDS = [ '*', '?' ];
 	const OPERATORS = [ '==', '===', '!=', '!==', '^=', '$=', '~=', '<', '<=', '>=', '>' ];
 	const ACCESSOR = '.';
+	const WHITESPACE = Object.assign( // eslint-disable-line mocha/no-setup-in-describe
+		[ ' ', '\t', '\n' ], {
+			name: function(char) {
+				switch (char) {
+				case ' ': return 'space';
+				case '\t': return 'tab';
+				case '\n': return 'newline';
+				default: throw new TypeError(`${char} is not a whitespace character`);
+				}
+			}
+		});
 
 	describe('Empty selector', function() {
 		beforeEach(function() {
@@ -33,12 +44,19 @@ describe('Selector syntax', function() {
 		it('should not allow dangling accessors', function() {
 			expect(parse.bind(null, `a${ACCESSOR}`)).to.throw();
 		});
+
+		it('should allow whitespace before and after accessors', function() {
+			WHITESPACE.forEach(whitespace => {
+				expect(parse.bind(null, `a${whitespace}${ACCESSOR}b`), `${WHITESPACE.name(whitespace)} before`).to.not.throw();
+				expect(parse.bind(null, `a${ACCESSOR}${whitespace}b`), `${WHITESPACE.name(whitespace)} after`).to.not.throw();
+			});
+		});
 	});
 
 	describe('Identifiers', function() {
 		it('should throw on unescaped reserved characters in identifiers', function() {
 			const reserved = [
-				'.', '[', ']', ...OPERATORS, ',', ' ', ':'
+				'.', '[', ']', ...OPERATORS, ',', ':'
 			];
 
 			reserved.forEach(char =>
@@ -102,8 +120,19 @@ describe('Selector syntax', function() {
 			expect(parse.bind(null, 'a[b')).to.throw();
 		});
 
+		it('should allow whitespace before conditions', function() {
+			WHITESPACE.forEach(whitespace => {
+				expect(parse.bind(null, `a${whitespace}[b==c]`), `${WHITESPACE.name(whitespace)}`).to.not.throw();
+			});
+		});
+
 		it('should allow whitespace in conditions', function() {
-			expect(parse.bind(null, 'a[ b == c ]')).to.not.throw();
+			WHITESPACE.forEach(whitespace => {
+				expect(parse.bind(null, `a[${whitespace}b==c]`), `${WHITESPACE.name(whitespace)} after opening bracket`).to.not.throw();
+				expect(parse.bind(null, `a[b${whitespace}==c]`), `${WHITESPACE.name(whitespace)} before operator`).to.not.throw();
+				expect(parse.bind(null, `a[b==${whitespace}c]`), `${WHITESPACE.name(whitespace)} after operator`).to.not.throw();
+				expect(parse.bind(null, `a[b==c${whitespace}]`), `${WHITESPACE.name(whitespace)} before closing bracket`).to.not.throw();
+			});
 		});
 
 		it('should allow complex selectors in conditions', function() {
