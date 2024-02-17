@@ -233,8 +233,12 @@ function peg$parse(input, options) {
   var peg$e27 = peg$classExpectation([" ", "\t"], false, false);
 
   var peg$f0 = function(selectors) {
-	return Object.assign(function union(obj, references, mode) {		
-		return selectors.flatMap(select => select(obj, references, mode))
+	return Object.assign(function union(obj, references, mode) {
+		// For some reason, this is WAY faster than doing selectors.flatMap():
+		let result = selectors[0](obj, references, mode); // This is safe, because the grammar guarantees there is at least one selector
+		for (let i = 1; i < selectors.length; i++) 
+			result = result.concat(selectors[i](obj, references, mode));
+		return result;
 	}, {
 		// The selector is ambiguous if it is a union of more than one selectors, 
 		// or if there is only one selector and that selector is ambiguous itself
@@ -243,11 +247,9 @@ function peg$parse(input, options) {
 	});
 };
   var peg$f1 = function(head, tail) { 
-		return [ 
-			...head,  		// Spread operator: property descriptors are parsed as arrays (because they might include conditions)
-			...tail.flat()	// Spread operator: the tail is an array of Accessor_selectors because of the asterisk operator
-							// flat(): accessor selectors are themselves arrays as well (see their parse return value)
-		]; 
+		return head // head: property descriptors are parsed as arrays (because they might include conditions)
+			.concat(tail.flat()); // tail: the tail is an array of Accessor_selectors because of the asterisk operator
+								  // flat(): accessor selectors are themselves arrays as well (see their parse return value)
 	};
   var peg$f2 = function(selector) {
 		// Return value is the function select, but we will set some meta-properties of the selector on it:
@@ -276,11 +278,13 @@ function peg$parse(input, options) {
 			source: text()
 		});
 	};
-  var peg$f5 = function(accessor, property) { 
-		return [ accessor, ...property ]
+  var peg$f5 = function(accessor, property) { 		
+		property.unshift(accessor); // Faster than [ accessor, ...property ]
+		return property;
 	};
   var peg$f6 = function() {
 		return function access(resolution) {
+			throw new Error('aaa');
 			let result = [];
 			for (let item of resolution) {
 				result = result.concat(item.selection.map(property => ({
@@ -288,13 +292,16 @@ function peg$parse(input, options) {
 					selection: []
 				})));
 			}
-			resolution.splice(0, resolution.length, ...result); // Work in-place
+			// Rebuild resolution in-place:
+			// (This is faster than doing resolution.splice() or pushing each result item to an empty array)
+			resolution.length = result.length;
+			for (let i = 0; i < result.length; i++) resolution[i] = result[i];
 		}
 	};
   var peg$f7 = function(property, condition) { 
-		return [ 
-			property, 
-			...condition, 
+		// This is faster than doing [ property, ...condition, validate ]
+		condition.unshift(property);
+		condition.push(
 			function validate(resolution, references, mode = MODE_NORMAL) {
 				// Helper function that checks whether the target has a property of a given name
 				// Returns false if the target is null or undefined or a primitive,
@@ -330,8 +337,8 @@ function peg$parse(input, options) {
 							}
 					}
 				}
-			} 
-		] 
+			});
+		return condition;
 	};
   var peg$f8 = function(regex) {
 		// Wildcard selectors are always ambiguous
@@ -1492,3 +1499,4 @@ export {
 
   peg$parse as parse
 };
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNlbGVjdG9yLnBlZyJdLCJuYW1lcyI6WyJVbmlvbl9TZWxlY3RvciIsIlVuaW9uX09wZXJhdG9yIiwiU2VsZWN0b3IiLCJFbXB0eV9zZWxlY3RvciIsIkFjY2Vzc29yX3NlbGVjdG9yIiwiQWNjZXNzb3IiLCJQcm9wZXJ0eV9kZXNjcmlwdG9yIiwiUHJvcGVydHlfbmFtZSIsIkNvbmRpdGlvbiIsIlVuYXJ5Q29uZGl0aW9uIiwiQmluYXJ5Q29uZGl0aW9uIiwiT3BlcmF0b3IiLCJWYWx1ZSIsIlJlZmVyZW5jZVZhbHVlIiwiUmVmZXJlbmNlX2NoYXJhY3RlciIsIkxpdGVyYWxWYWx1ZSIsIklkZW50aWZpZXIiLCJQcm9wZXJ0eV9uYW1lX3dpdGhfd2lsZGNhcmQiLCJXaWxkY2FyZCIsIlBzZXVkb19Qcm9wZXJ0eSIsIlBlcm1pdHRlZF9jaGFyYWN0ZXIiLCJSZXNlcnZlZF9jaGFyYWN0ZXIiLCJFc2NhcGVfY2hhcmFjdGVyIiwiU3ltYm9sIiwiXyIsIiRpbml0aWFsaXplciJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O29DQU1nRTtBQUNoRTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQSxFO3FDQVE2RDtBQUM3RDtBQUNBO0FBQ0E7QUFDQSxDQUFDLEU7bUNBQUk7QUFDTDtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7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

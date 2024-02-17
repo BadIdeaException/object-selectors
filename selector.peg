@@ -5,8 +5,12 @@
 }
 
 Union_Selector = selectors:Selector|1.., _* Union_Operator _*| {
-	return Object.assign(function union(obj, references, mode) {		
-		return selectors.flatMap(select => select(obj, references, mode))
+	return Object.assign(function union(obj, references, mode) {
+		// For some reason, this is WAY faster than doing selectors.flatMap():
+		let result = selectors[0](obj, references, mode); // This is safe, because the grammar guarantees there is at least one selector
+		for (let i = 1; i < selectors.length; i++) 
+			result = result.concat(selectors[i](obj, references, mode));
+		return result;
 	}, {
 		// The selector is ambiguous if it is a union of more than one selectors, 
 		// or if there is only one selector and that selector is ambiguous itself
@@ -22,11 +26,9 @@ Union_Operator = ",";
 Selector 
 	= Empty_selector /
 	selector:(head:Property_descriptor tail:Accessor_selector* { 
-		return [ 
-			...head,  		// Spread operator: property descriptors are parsed as arrays (because they might include conditions)
-			...tail.flat()	// Spread operator: the tail is an array of Accessor_selectors because of the asterisk operator
-							// flat(): accessor selectors are themselves arrays as well (see their parse return value)
-		]; 
+		return head // head: property descriptors are parsed as arrays (because they might include conditions)
+			.concat(tail.flat()); // tail: the tail is an array of Accessor_selectors because of the asterisk operator
+								  // flat(): accessor selectors are themselves arrays as well (see their parse return value)
 	}) {
 		// Return value is the function select, but we will set some meta-properties of the selector on it:
 		// - Whether or not the selector is ambiguous
@@ -57,8 +59,9 @@ Empty_selector
 	}
 
 Accessor_selector 
-	= accessor:Accessor property:Property_descriptor { 
-		return [ accessor, ...property ]
+	= accessor:Accessor property:Property_descriptor { 		
+		property.unshift(accessor); // Faster than [ accessor, ...property ]
+		return property;
 	};
 	
 Accessor 
@@ -71,7 +74,10 @@ Accessor
 					selection: []
 				})));
 			}
-			resolution.splice(0, resolution.length, ...result); // Work in-place
+			// Rebuild resolution in-place:
+			// (This is faster than doing resolution.splice() or pushing each result item to an empty array)
+			resolution.length = result.length;
+			for (let i = 0; i < result.length; i++) resolution[i] = result[i];
 		}
 	};
 
@@ -81,9 +87,9 @@ Accessor
  */
 Property_descriptor 
 	= property:Property_name condition:Condition* { 
-		return [ 
-			property, 
-			...condition, 
+		// This is faster than doing [ property, ...condition, validate ]
+		condition.unshift(property);
+		condition.push(
 			function validate(resolution, references, mode = MODE_NORMAL) {
 				// Helper function that checks whether the target has a property of a given name
 				// Returns false if the target is null or undefined or a primitive,
@@ -119,8 +125,8 @@ Property_descriptor
 							}
 					}
 				}
-			} 
-		] 
+			});
+		return condition;
 	};
 
 /*
