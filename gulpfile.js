@@ -7,7 +7,8 @@ const buildParser = function() {
 	return gulp.src('selector.peg')
 		.pipe(tap(function(file) {
 			file.contents = new Buffer(peggy.generate(file.contents.toString('utf-8'), {
-				output: 'source',
+				output: 'source-with-inline-map',
+				grammarSource: 'selector.peg',
 				format: 'es'
 			}));
 		}))
