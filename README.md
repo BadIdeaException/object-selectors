@@ -120,11 +120,11 @@ The union of multiple selectors may be selected by separating them with a `,`. T
 
 Union selectors with more than one component are ambiguous.
 
-### Pseudo elements
+### Pseudo properties
 
-Pseudo elements start with a double colon `::` and select "virtual" properties.
+Pseudo properties start with a double colon `::` and select "virtual" properties. They resemble pseudo elements in CSS, and follow the same syntax.
 
-Pseudo element | Meaning | Example
+Pseudo property | Meaning | Example
 :--- | :--- | :---
 `::root` | Selects the input object itself. | `a.b.::root` selects `obj`
 `::first` | Selects the first element of an array, the first property of an object, or the first character of a string. Selects nothing on anything else. | `arr.::first` selects the first element of array `arr`. (Same as `arr.0`)

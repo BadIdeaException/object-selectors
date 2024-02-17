@@ -390,12 +390,12 @@ function peg$parse(input, options) {
 					item.selection = [];
 			});
 		}
-		const PSEUDO_ELEMENTS = {
+		const PSEUDO_PROPERTIES = {
 			'::root': selectRoot,
 			'::first': selectFirst,
 			'::last': selectLast
 		}
-		return PSEUDO_ELEMENTS[pseudo];
+		return PSEUDO_PROPERTIES[pseudo];
 	};
   var peg$f11 = function(condition) {
 		return function selectByCondition(resolution, references, mode) {
@@ -822,7 +822,7 @@ function peg$parse(input, options) {
       s0 = s1;
       if (s0 === peg$FAILED) {
         s0 = peg$currPos;
-        s1 = peg$parsePseudo_Element();
+        s1 = peg$parsePseudo_Property();
         if (s1 !== peg$FAILED) {
           peg$savedPos = s0;
           s1 = peg$f10(s1);
@@ -1284,7 +1284,7 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parsePseudo_Element() {
+  function peg$parsePseudo_Property() {
     var s0;
 
     if (input.substr(peg$currPos, 6) === peg$c19) {

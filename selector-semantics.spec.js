@@ -110,7 +110,7 @@ describe('Selector semantics', function() {
 		});
 	});
 
-	describe('Pseudo elements', function() {
+	describe('Pseudo properties', function() {
 		describe('::root', function() {
 			it('should select the input object with', function() {
 				const obj = { a: {} };

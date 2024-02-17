@@ -148,7 +148,7 @@ Property_name
 			resolution.forEach(item => item.selection = [ name ]);
 		}          
 	}
-	/ pseudo:Pseudo_Element {
+	/ pseudo:Pseudo_Property {
 		function selectRoot(resolution) {
 			resolution.forEach(item => {
 				item.target = { '::root': resolution.root };
@@ -184,12 +184,12 @@ Property_name
 					item.selection = [];
 			});
 		}
-		const PSEUDO_ELEMENTS = {
+		const PSEUDO_PROPERTIES = {
 			'::root': selectRoot,
 			'::first': selectFirst,
 			'::last': selectLast
 		}
-		return PSEUDO_ELEMENTS[pseudo];
+		return PSEUDO_PROPERTIES[pseudo];
 	}
 
 
@@ -285,7 +285,7 @@ Wildcard
 		}
 	}
 
-Pseudo_Element = "::root" / "::first" / "::last";
+Pseudo_Property = "::root" / "::first" / "::last";
 
 Permitted_character 
 	= [A-Za-z0-9_];

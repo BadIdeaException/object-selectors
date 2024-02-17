@@ -74,7 +74,7 @@ describe('Selector syntax', function() {
 		});
 	});
 
-	describe('Pseudo elements', function() {
+	describe('Pseudo properties', function() {
 		it('should allow ::root', function() {
 			expect(parse.bind(null, '::root')).to.not.throw();
 		});
