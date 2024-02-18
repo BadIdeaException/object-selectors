@@ -103,6 +103,22 @@ describe('Selector syntax', function() {
 		});
 	});
 
+	describe('Meta properties', function() {
+		// eslint-disable-next-line mocha/no-setup-in-describe
+		[
+			['string', 'number', 'bigint', 'boolean', 'symbol'],
+			['undefined', 'null'],
+			['object', 'array'],
+			['primitive', 'complex'],
+			['existent', 'nonexistent'],
+			['unique']
+		].forEach(metaPropertyGroup =>
+			it(`should allow ${new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(metaPropertyGroup.map(metaProperty => `:${metaProperty}`))}`, function() {
+				metaPropertyGroup.forEach(metaProperty =>
+					expect(parse.bind(null, `*:${metaProperty}`), `:${metaProperty}`).to.not.throw());
+			}));
+	});
+
 	describe('Conditions', function() {
 		it('should allow unary conditions', function() {
 			expect(parse.bind(null, 'a[b]')).to.not.throw();

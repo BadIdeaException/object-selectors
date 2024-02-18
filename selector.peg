@@ -86,10 +86,11 @@ Accessor
  * a series of conditions.
  */
 Property_descriptor 
-	= property:Property_name _* condition:Condition* { 
+	= property:Property_name _* meta:Meta_property* _* condition:Condition* { 
 		// This is faster than doing [ property, ...condition, validate ]
-		condition.unshift(property);
-		condition.push(
+		meta.unshift(property);
+		meta = meta.concat(condition);
+		meta.push(
 			function validate(resolution, references, mode = MODE_NORMAL) {
 				// Helper function that checks whether the target has a property of a given name
 				// Returns false if the target is null or undefined or a primitive,
@@ -126,7 +127,8 @@ Property_descriptor
 					}
 				}
 			});
-		return condition;
+
+		return meta;
 	};
 
 /*
@@ -198,6 +200,70 @@ Property_name
 		return PSEUDO_PROPERTIES[pseudo];
 	}
 
+
+
+/*
+ * Meta properties are virtual properties describing the characteristics of actual properties. They are similar to conditions in that
+ * they constrain previously selected properties. They are similar to CSS pseudo-classes.
+ */
+Meta_property
+	= ":" meta:("string" / "number" / "bigint" / "boolean" / "undefined" / "symbol" / "null" / "primitive" / "object" / "array" / "complex" / "existent" / "nonexistent" / "unique") {
+		// Helper function to create the type-selection function that filters out values for which the typeguard predicate is true
+		function createSelectFunction(typeguard) {
+			return function selectByType(resolution, references, mode) {
+				for (let item of resolution) {
+					for (let i = 0; i < item.selection.length; i++) {					
+						if (typeguard(item.target[item.selection[i]]))
+							delete item.selection[i];
+					}				
+					item.selection = item.selection.filter(sel => sel !== undefined);
+				}			
+			}
+		}
+		const PRIMITIVES = [ 'string', 123, 123n, true, undefined, Symbol(), null ]
+
+		switch (meta) {
+		case 'string': return createSelectFunction(subject => typeof subject !== 'string');
+		case 'number': return createSelectFunction(subject => typeof subject !== 'number');
+		case 'bigint': return createSelectFunction(subject => typeof subject !== 'bigint');
+		case 'boolean': return createSelectFunction(subject => typeof subject !== 'boolean');
+		case 'undefined': return createSelectFunction(subject => typeof subject !== 'undefined');
+		case 'symbol': return createSelectFunction(subject => typeof subject !== 'symbol');
+		case 'null': return createSelectFunction(subject => subject !== null);
+		case 'primitive': return createSelectFunction(subject => typeof subject === 'object' && subject !== null);
+		case 'object': return createSelectFunction(subject => typeof subject !== 'object' || subject === null || Array.isArray(subject));
+		case 'array': return createSelectFunction(subject => !Array.isArray(subject));
+		case 'complex': return createSelectFunction(subject => typeof subject !== 'object' || subject === null);
+
+		case 'existent': return createSelectFunction(subject => subject == undefined);
+		case 'nonexistent': return createSelectFunction(subject => subject != undefined);
+		case 'unique': 
+			return function selectUnique(resolution, references, mode) {
+				// Run through the resolutions and for all selections, remove any duplicates, as determined by the comparator function.
+				//
+				// For this, only check items' selections that come AFTER the current one, e.g. given the following resolutions:
+				//       a       b
+				//     0 1 2   0   1		a0 a1 a2 b0 b2
+				// 							   ^   ^
+				// 							   |   |
+				//				when (i,j) are here...
+				// 							...start (k,l) checking from here
+				for (let i = 0; i < resolution.length; i++)
+					for (let j = 0; j < resolution[i].selection.length; j++)
+						for (let k = i; k < resolution.length; k++) {
+							for (let l = k === i ? j + 1 : 0; l < resolution[k].selection.length; l++) {
+								const a = resolution[i].target[resolution[i].selection[j]];
+								const b = resolution[k].target[resolution[k].selection[l]];
+								if (b !== undefined && a === b)
+									// Just delete for now, because that is faster than repeated splicing.
+									// We will remove all deleted entries at the end.
+									delete resolution[k].selection[l];
+							}
+							resolution[k].selection = resolution[k].selection.filter(sel => sel !== undefined);
+						}			
+			}
+		}
+	}
 
 
 /*

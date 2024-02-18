@@ -173,6 +173,210 @@ describe('Selector semantics', function() {
 		});
 	});
 
+	describe('Meta properties', function() {
+		// eslint-disable-next-line mocha/no-setup-in-describe
+		const PRIMITIVES = [ 'string', 123, 123n, true, undefined, Symbol(), null ]
+
+		// eslint-disable-next-line mocha/no-setup-in-describe
+		describe(`${new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(PRIMITIVES.map(primitive => primitive === null ? 'null' : typeof primitive).map(metaProperty => `:${metaProperty}`))}`, function() {
+			it('should select primitives of the given type', function() {
+				PRIMITIVES.forEach(primitive => {
+					const obj = { a: primitive }
+
+					const resolution = parse(`*:${primitive === null ? 'null' : typeof primitive}`)(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+				});
+			});
+
+			it('should discard all other values', function() {
+				PRIMITIVES.forEach(primitive => {
+					const others = [ {}, [], ...PRIMITIVES.filter(x => x !== primitive) ];
+
+					others.forEach(other => {
+						const obj = { a: other };
+
+						const resolution = parse(`*:${primitive === null ? 'null' : typeof primitive}`)(obj);
+
+						expect(resolution).to.be.an('array').with.lengthOf(1);
+						expect(resolution[0]).to.have.property('target').that.equals(obj);
+						expect(resolution[0]).to.have.property('selection').that.is.empty;
+					});
+				});
+			});
+		});
+
+		describe(':primitive', function() {
+			it(`should select values of type ${new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(PRIMITIVES.map(primitive => primitive === null ? 'null' : typeof primitive))}`, function() {
+				PRIMITIVES.forEach(primitive => {
+					const obj = { a: primitive }
+
+					const resolution = parse('*:primitive')(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+				});
+			});
+
+			it('should discard values of type object', function() {
+				const obj = { a: {} }
+
+				const resolution = parse('*:primitive')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.is.empty;
+			});
+		});
+
+		describe(':object', function() {
+			it('should select values of type object', function() {
+				const obj = { a: {} }
+
+				const resolution = parse('*:object')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+			});
+
+			it('should not select primitives', function() {
+				PRIMITIVES.forEach(primitive => {
+					const obj = { a: primitive }
+
+					const resolution = parse('*:object')(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.is.empty;
+				});
+			});
+
+			it('should not select arrays', function() {
+				const obj = { a: [] }
+
+				const resolution = parse('*:object')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.is.empty;
+			});
+		});
+
+		describe(':array', function() {
+			it('should select values of type array', function() {
+				const obj = { a: [] }
+
+				const resolution = parse('*:array')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+			});
+
+			it('should not select objects or primitives', function() {
+				[ {}, ...PRIMITIVES ].forEach(objectOrPrimitive => {
+					const obj = { a: objectOrPrimitive }
+
+					const resolution = parse('*:array')(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.is.empty;
+				});
+			});
+		});
+
+		describe(':complex', function() {
+			it('should select values of type array', function() {
+				const obj = { a: [] }
+
+				const resolution = parse('*:complex')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+			});
+
+			it('should select values of type object', function() {
+				const obj = { a: {} }
+
+				const resolution = parse('*:complex')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+			});
+
+			it('should not select primitives', function() {
+				PRIMITIVES.forEach(primitive => {
+					const obj = { a: primitive }
+
+					const resolution = parse('*:complex')(obj);
+
+					expect(resolution).to.be.an('array').with.lengthOf(1);
+					expect(resolution[0]).to.have.property('target').that.equals(obj);
+					expect(resolution[0]).to.have.property('selection').that.is.empty;
+				});
+			});
+		});
+
+		describe(':existent', function() {
+			it('should select values other than null/undefined', function() {
+				const obj = { a: null, b: undefined, c: 1 }
+
+				const resolution = parse('*:existent')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'c' ]);
+			});
+		});
+
+		describe(':nonexistent', function() {
+			it('should select only values null/undefined', function() {
+				const obj = { a: null, b: undefined, c: 1 }
+
+				const resolution = parse('*:nonexistent')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a', 'b' ]);
+			});
+		});
+
+		describe(':unique', function() {
+			it('should filter out values that are present more than once', function() {
+				const obj = {
+					a: 1,
+					b: 1
+				}
+
+				const resolution = parse('*:unique')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a' ]);
+			});
+
+			it('should not filter out values that are present only once', function() {
+				const obj = {
+					a: 1,
+					b: 2
+				}
+
+				const resolution = parse('*:unique')(obj);
+
+				expect(resolution).to.be.an('array').with.lengthOf(1);
+				expect(resolution[0]).to.have.property('target').that.equals(obj);
+				expect(resolution[0]).to.have.property('selection').that.has.members([ 'a', 'b' ]);
+			});
+		});
+	});
+
 	describe('Conditional selectors', function() {
 		it('should select with complex selectors in conditions', function() {
 			const obj = {

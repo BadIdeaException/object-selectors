@@ -60,7 +60,7 @@ Note that ambiguity is a property of the selector itself, independent the result
 
 The empty string `''` is called the **empty** selector. By definition, it selects the input object.
 
-_Note: This behavior is deprecated and now discouraged. It may be changed in the future. Use [::root](#pseudo-elements) instead._
+*Note: This behavior is deprecated and now discouraged. It may be changed in the future. Use [::root](#pseudo-elements) instead.*
 
 ## Notation
 
@@ -129,6 +129,26 @@ Pseudo property | Meaning | Example
 `::root` | Selects the input object itself. | `a.b.::root` selects `obj`
 `::first` | Selects the first element of an array, the first property of an object, or the first character of a string. Selects nothing on anything else. | `arr.::first` selects the first element of array `arr`. (Same as `arr.0`)
 `::last` | Selects the last element of an array, the last property of an object, or the last character of a string. Selects nothing on anthing else. | `str.::last` selects the last character of string `str`
+
+### Meta properties
+
+Meta properties start with a single colon `:`. Similar to conditions, they constrain the selected properties based on their characteristics. Thus, they work as filters. They resemble CSS pseudo classes, and follow the same syntax.
+
+More than one meta property may be used. In this case, they will be applied in the order they are given.
+
+Meta properties, unlike pseudo properties, must not be preceded by a `.`.
+
+Meta property | Meaning | Example
+:--- | :--- | :---
+`:string`, `:number`, `:bigint`, `:boolean`, `:symbol` | Restricts the selected properties to ones matching the associated type | Given `obj = { a: true, b: 1 }`, `*:boolean` selects `obj.a`, but not `obj.b`.
+`:null`, `:undefined` | Restricts the selected properties to ones that are `null`/`undefined`, resp. | Given `obj = { a: null, b: 1 }`, `*:null` selects `obj.a`, but not `obj.b`.
+`:object` | Restricts the selected properties to objects, excluding arrays. (To include arrays, use `:complex`.) | Given `obj = { a: {}, b: [] }`, `*:object` selects `obj.a`, but not `obj.b`.
+`:array` | Restricts the selected properties to arrays (as per `Array.isArray()`). | Given `obj = { a: {}, b: [] }`, `*:array` selects `obj.b`, but not `obj.a`.
+`:primitive` | Restricts the selected properties to [primitives](https://developer.mozilla.org/en-US/docs/Glossary/Primitive).
+`:complex` | Restricts the selected properties to objects and arrays. | Given `obj = { a: {}, b: [] }`, `*:complex` selects `obj.a` and  `obj.b`.
+`:existent` | Restricts the selected properties such that `null` and `undefined` values are filtered out. | Given `obj = { a: null, b: 1 }`, `*:existent` selects `obj.b`, but not `obj.a`.
+`:nonexistent` | Restricts the selected properties to `null` and `undefined` values. | Given `obj = { a: null, b: 1 }`, `*:nonexistent` selects `obj.a`, but not `obj.b`.
+`:unique` | Restricts the selected properties such that only the first occurence of each value is kept. | Given `obj = { a: 1, b: 1 }`, `*:unique` selects `obj.a`, but not `obj.b`.
 
 ## Examples
 
@@ -199,7 +219,8 @@ If it is unambiguous, the result is returned as a scalar. `options.collate` can 
 *   Setting `options.collate` to `false` will *always* return an array, even if there is only one result.
 *   Setting `options.collate` to `true` will check that all results are deeply equal, and if they are, return their value as a scalar.
     If the results are not all deeply equal, an error will be thrown. (Note that the function will still have been applied, though.)
-*   Setting `options.collate` to a function value will check that all results are equal by using the function for pairwise comparison.
+*   Setting `options.collate` to a function value will check that after applying that function to all results they are all equal. Note that
+    the function is only used for determining collation equality -- the returned results are still the same.
 
 *Note: In versions prior 2.0, this function was called `apply`. This has been changed to `perform` to avoid a name conflict with
 `Function.prototype.apply` in compiled selectors.*
@@ -213,17 +234,18 @@ If it is unambiguous, the result is returned as a scalar. `options.collate` can 
 *   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)?** An optional object with further options for the operation
 
     *   `options.collate` **([boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) | [function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function))?** Whether to collate the results or not. Defaults to `true` on unambiguous selectors, and to `false` on ambiguous ones.
-        When collating, an error is thrown if the results of applying `fn` to all selected properties are not all deeply equal.
-        If set to a comparator function, this function is used instead of deep equality.
+        When collating, an error is thrown if the results of applying `fn` to all selected properties are not all strictly equal in terms of their JSON representation.
+        If set to a function, this function is applied to all results, then those results are checked for (strict) equality.
         Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
     *   `options.unique` **([boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) | [function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function))?** Whether to filter out duplicate values before applying `fn`. If set to `true`, strict equality is
         used to compare values. Alternatively, can be set to a comparator function which will then be used to determine equality. For duplicate values,
         only the first occurence is kept. Note that `options.unique` differs from `options.collate` in that it filters the selection *before* the
         function is applied.
         Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
+        *Note: This functionality is deprecated. Use the [:unique meta property](#meta-properties) instead.*
     *   `options.mode` **(`"normal"` | `"strict"` | `"lenient"`)** The selection mode to use. In `normal` mode, it is permissible to select a non-existent property
         as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
-        mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
+        mimics the ordinary rules of selecting object properties in Javascript (where `{}.a === undefined`).
         In `strict` mode, any attempt to select a non-existent property immediately results in an error.
         In `lenient` mode, non-existent properties are silently dropped.
         The default mode is `normal`. (optional, default `'normal'`)

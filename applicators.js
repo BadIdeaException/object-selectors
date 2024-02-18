@@ -16,10 +16,11 @@ function _perform(select, fn, obj, options) {
 	let resolution = select(obj, options?.references, mode);
 
 	if (options?.unique) {
+		console.warn('Using options.unique is deprecated. Use the :unique meta property instead.');
 		// If options.unique === true, default to strict equality as the comparator
 		const comp = typeof options.unique === 'function' ? options.unique : (a, b) => a === b;
 		// Run through the resolutions and for all selections, remove any duplicates, as determined by the comparator function.
-		// 
+		//
 		// For this, only check items' selections that come AFTER the current one, e.g. given the following resolutions:
 		//       a       b
 		//     0 1 2   0   1		a0 a1 a2 b0 b2
@@ -130,6 +131,7 @@ export function compile(selector) {
  * only the first occurence is kept. Note that `options.unique` differs from `options.collate` in that it filters the selection _before_ the
  * function is applied.
  * Note that this may be quite performance heavy if a lot of properties are selected and/or the comparator is computationally expensive.
+ * _Note: This functionality is deprecated. Use the [:unique meta property](#meta-properties) instead._
  * @param  {'normal'|'strict'|'lenient'}	[options.mode='normal'] The selection mode to use. In `normal` mode, it is permissible to select a non-existent property
  * as long as it is the terminal portion of the selector. I.e. it is permissible to select `'a'` on `{}`, but not `'a.b'`. This mode
  * mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
