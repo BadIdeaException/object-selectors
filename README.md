@@ -43,8 +43,8 @@ Use as follows:
     }
 
     get('a.b*.c', obj); // [ 1, 2 ]
-    set('a.b*.c', obj, 'c'); [ 'c', 'c' ]
-    get('a.b*.c', obj); // [ 'c', 'c' ]
+    set('a.b1.c', obj, 'c'); // 'c'
+    get('a.b*.c', obj); // [ 'c', 2 ]
 
 ## Definitions
 
@@ -116,7 +116,7 @@ Operator | Condition looks like | Meaning
 
 The union of multiple selectors may be selected by separating them with a `,`. The result is the union of the results of the individual selectors:
 
-    get('a.b.c, 'd.*.f', obj) === [ get('a.b.c'), ...get('d.*.f') ]
+    get('a.b.c, d.*.f', obj) === [ get('a.b.c'), ...get('d.*.f') ]
 
 Union selectors with more than one component are ambiguous.
 
@@ -162,8 +162,8 @@ Pseudo property | Meaning | Example
     // Access any property on obj.a which itself has a property c that strictly equals the value of property val on the reference object
     get('a.*[c === @val], obj, { val: 1 }) // [ 1 ] 
 
-    // Empty selector
-    get('', obj) // obj
+    // ::root pseudo property
+    get('::root', obj) // obj
 
 ## API
 
