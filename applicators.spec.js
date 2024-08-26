@@ -23,13 +23,13 @@ describe('perform', function() {
 		expect(fn).to.have.been.calledWith(obj.a.b2.c);
 	});
 
-	it('should pass value, property, context to the function', function() {
+	it('should pass value, property, context and root to the function', function() {
 		const fn = sinon.spy();
 		const c = obj.a.b1.c;
 
 		perform('a.b1.c', fn, obj);
 
-		expect(fn).to.have.been.calledWith(c, 'c', sinon.match.same(obj.a.b1));
+		expect(fn).to.have.been.calledWith(c, 'c', sinon.match.same(obj.a.b1), sinon.match.same(obj));
 	});
 
 	it('should set matching properties to the result value', function() {
@@ -144,6 +144,25 @@ describe('perform', function() {
 			const spy = sinon.spy(fn);
 			perform('a?.b.c', spy, obj, { mode: 'lenient' });
 			expect(spy).to.have.been.calledOnce.and.calledWith(1);
+		});
+	});
+
+	describe('Selection safety', function() {
+		const fn = x => x;
+		const UNSAFE_KEYS = [ 'constructor', 'prototype', '__proto__', '__defineGetter__', '__lookupGetter__', '__defineSetter__', '__lookupSetter__' ];
+
+		it('should throw when trying to access a forbidden key', function() {
+			UNSAFE_KEYS.forEach(evil => expect(perform.bind(null, evil, fn, obj), evil).to.throw(/unsafe/i));
+		});
+
+		it('should allow to access a forbidden key when explicitly opting into unsafe selection', function() {
+			UNSAFE_KEYS.forEach(evil => {
+				const target = function() {}; // prototype property exists only on functions, and for the other ones it makes no difference
+				const op = perform.bind(null, evil, fn, target, { allowUnsafe: true });
+
+				expect(op, evil).to.not.throw();
+				expect(op(), evil).to.equal(target[evil]);
+			});
 		});
 	});
 });

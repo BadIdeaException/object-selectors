@@ -13,7 +13,7 @@ function _perform(select, fn, obj, options) {
 	const mode = { 'strict': 1, 'lenient': 2 }[options?.mode?.toLowerCase()];
 
 
-	let resolution = select(obj, options?.references, mode);
+	let resolution = select(obj, options?.references, mode, !options?.allowUnsafe);
 
 	if (options?.unique) {
 		console.warn('Using options.unique is deprecated. Use the :unique meta property instead.');
@@ -42,10 +42,9 @@ function _perform(select, fn, obj, options) {
 					resolution[k].selection = resolution[k].selection.filter(sel => sel !== undefined);
 				}
 	}
-
 	for (let item of resolution)
 		for (let property of item.selection) {
-			const value = fn(item.target[property], property, item.target);
+			const value = fn(item.target[property], property, item.target, resolution.root);
 			// Only assign new value if it is different
 			// This is important so that read operations will work even on read-only (e.g. frozen) objects
 			// In read-only mode, NEVER attempt to set a new value. This is important so that dynamically generated properties
@@ -137,7 +136,9 @@ export function compile(selector) {
  * mimics the ordinary rules of selecting object properties in Javascript (where `{}['a'] === undefined`).
  * In `strict` mode, any attempt to select a non-existent property immediately results in an error.
  * In `lenient` mode, non-existent properties are silently dropped.
- * The default mode is `normal`.
+ * @param  {boolean}	[options.allowUnsafe=false] Set this to `true` to allow accessing unsafe properties on the target. Unsafe properties are 
+ * `constructor, prototype, __proto__, __defineGetter__, __lookupGetter__, __defineSetter__, __lookupSetter__`. Otherwise, trying to access these will result in an
+ * error being thrown. See the section on [security considerations](#security-considerations) for why these are considered unsafe.
  * @param  {Object}  [options.references] The values for any references used in the selector.
  * @return {*}            The results of applying `fn` to all selected properties.
  */
